@@ -300,38 +300,20 @@ async function searchBrandFromDb(query) {
 }
 
 async function lookupBrandName(code) {
-  if (!supabaseClient) return '';
-  try {
-    const { data, error } = await supabaseClient
-      .from('brand_master')
-      .select('name')
-      .eq('code', code)
-      .maybeSingle();
-    if (error) throw error;
-    return data ? data.name : '';
-  } catch (e) {
-    console.error('Failed to lookup brand from DB:', e);
-    if (typeof lookupStock === 'function') {
-      return lookupStock(code);
-    }
-    return '';
+  if (typeof lookupStock === 'function') {
+    return lookupStock(code);
   }
+  return '';
 }
 
 async function lookupBrandDetail(code) {
-  if (!supabaseClient) return null;
-  try {
-    const { data, error } = await supabaseClient
-      .from('brand_master')
-      .select('name, industry')
-      .eq('code', code)
-      .maybeSingle();
-    if (error) throw error;
-    return data || null;
-  } catch (e) {
-    console.error('Failed to lookup brand detail from DB:', e);
-    return null;
+  if (typeof lookupStock === 'function') {
+    const name = lookupStock(code);
+    if (name) {
+      return { name: name, industry: '' };
+    }
   }
+  return null;
 }
 
 // ============================================================
