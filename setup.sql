@@ -54,6 +54,12 @@ create table if not exists shikiho_evaluations (
   keywords text,
   industry varchar(100),
   status varchar(50),
+  dividend_score integer,
+  financial_score integer,
+  earning_score integer,
+  future_score integer,
+  valuation_score integer,
+  shikiho_comment text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

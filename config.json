@@ -1,5 +1,4 @@
 {
-  "SUPABASE_URL": "https://hczndlpcovtwpmraphkn.supabase.co",
-  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhjem5kbHBjb3Z0d3BtcmFwaGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjk1NzQsImV4cCI6MjA5NzEwNTU3NH0.SQqXMsoPSRXGuaFGoJibR3A3Q7MvLOp1IRHDLYn4tOQ",
+  "GAS_WEB_APP_URL": "https://script.google.com/macros/s/AKfycbzTyBePV_PjRaoVa1BYdxtE4W6lQkZIvWxDY1YDqSbuv6hBZzpfqrNadfwYWVNRFWE/exec",
   "SPREADSHEET_ID": "1QakGiEZQOFkdMEw6DTy73w3RkGeQ-kVx4ebTULfMVu8"
 }

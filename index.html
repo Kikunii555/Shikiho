@@ -283,11 +283,11 @@
 
           <!-- Ratings -->
           <div class="form-group">
-            <label class="form-label">5大評価（S, A, B, C, D, E）</label>
+            <label class="form-label">5大評価（S, A, B, C, D, E）＆ スコア</label>
             <div class="form-row" style="grid-template-columns: repeat(5, 1fr); gap:8px;">
               <div>
                 <label class="form-label" style="font-size:0.6rem">配当力</label>
-                <select class="form-input" id="inputRatingDiv" style="padding:6px 8px; font-size:0.8rem;">
+                <select class="form-input" id="inputRatingDiv" style="padding:6px 8px; font-size:0.8rem; margin-bottom:4px;">
                   <option value="">-</option>
                   <option value="S">S</option>
                   <option value="A">A</option>
@@ -296,10 +296,11 @@
                   <option value="D">D</option>
                   <option value="E">E</option>
                 </select>
+                <input type="number" class="form-input" id="inputScoreDiv" placeholder="点" style="padding:6px 8px; font-size:0.8rem;">
               </div>
               <div>
                 <label class="form-label" style="font-size:0.6rem">財務</label>
-                <select class="form-input" id="inputRatingFin" style="padding:6px 8px; font-size:0.8rem;">
+                <select class="form-input" id="inputRatingFin" style="padding:6px 8px; font-size:0.8rem; margin-bottom:4px;">
                   <option value="">-</option>
                   <option value="S">S</option>
                   <option value="A">A</option>
@@ -308,10 +309,11 @@
                   <option value="D">D</option>
                   <option value="E">E</option>
                 </select>
+                <input type="number" class="form-input" id="inputScoreFin" placeholder="点" style="padding:6px 8px; font-size:0.8rem;">
               </div>
               <div>
                 <label class="form-label" style="font-size:0.6rem">稼ぐ力</label>
-                <select class="form-input" id="inputRatingEarn" style="padding:6px 8px; font-size:0.8rem;">
+                <select class="form-input" id="inputRatingEarn" style="padding:6px 8px; font-size:0.8rem; margin-bottom:4px;">
                   <option value="">-</option>
                   <option value="S">S</option>
                   <option value="A">A</option>
@@ -320,10 +322,11 @@
                   <option value="D">D</option>
                   <option value="E">E</option>
                 </select>
+                <input type="number" class="form-input" id="inputScoreEarn" placeholder="点" style="padding:6px 8px; font-size:0.8rem;">
               </div>
               <div>
                 <label class="form-label" style="font-size:0.6rem">将来性</label>
-                <select class="form-input" id="inputRatingFuture" style="padding:6px 8px; font-size:0.8rem;">
+                <select class="form-input" id="inputRatingFuture" style="padding:6px 8px; font-size:0.8rem; margin-bottom:4px;">
                   <option value="">-</option>
                   <option value="S">S</option>
                   <option value="A">A</option>
@@ -332,10 +335,11 @@
                   <option value="D">D</option>
                   <option value="E">E</option>
                 </select>
+                <input type="number" class="form-input" id="inputScoreFuture" placeholder="点" style="padding:6px 8px; font-size:0.8rem;">
               </div>
               <div>
                 <label class="form-label" style="font-size:0.6rem">割安度</label>
-                <select class="form-input" id="inputRatingValue" style="padding:6px 8px; font-size:0.8rem;">
+                <select class="form-input" id="inputRatingValue" style="padding:6px 8px; font-size:0.8rem; margin-bottom:4px;">
                   <option value="">-</option>
                   <option value="S">S</option>
                   <option value="A">A</option>
@@ -344,8 +348,14 @@
                   <option value="D">D</option>
                   <option value="E">E</option>
                 </select>
+                <input type="number" class="form-input" id="inputScoreValue" placeholder="点" style="padding:6px 8px; font-size:0.8rem;">
               </div>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">四季報コメント</label>
+            <textarea class="form-input" id="inputShikihoComment" rows="3" placeholder="全体的な評価やコメント..."></textarea>
           </div>
 
         </form>
@@ -424,7 +434,6 @@
   <!-- ===== Hidden file input ===== -->
   <input type="file" class="hidden-input" id="fileInput" accept=".json">
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.0/dist/umd/supabase.js"></script>
   <script src="stocks.js"></script>
   <script src="demo-data.js"></script>
   <script src="app.js"></script>

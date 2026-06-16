@@ -75,6 +75,12 @@ function mapEvaluationToDb(item) {
     keywords: item.keywords,
     industry: item.industry,
     status: item.status,
+    dividend_score: item.dividendScore,
+    financial_score: item.financialScore,
+    earning_score: item.earningScore,
+    future_score: item.futureScore,
+    valuation_score: item.valuationScore,
+    shikiho_comment: item.shikihoComment,
     updated_at: new Date().toISOString()
   };
 }
@@ -109,52 +115,48 @@ function mapEvaluationFromDb(row) {
     keywords: row.keywords || '',
     industry: row.industry || '',
     status: row.status || '',
+    dividendScore: row.dividend_score != null ? parseInt(row.dividend_score) : null,
+    financialScore: row.financial_score != null ? parseInt(row.financial_score) : null,
+    earningScore: row.earning_score != null ? parseInt(row.earning_score) : null,
+    futureScore: row.future_score != null ? parseInt(row.future_score) : null,
+    valuationScore: row.valuation_score != null ? parseInt(row.valuation_score) : null,
+    shikihoComment: row.shikiho_comment || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
 }
 
 // ============================================================
-// Data Store (Supabase Non-blocking API)
+// Data Store (GAS API)
 // ============================================================
+let gasAppUrl = null;
+
 const DataStore = {
   async init() {
-    // Supabaseライブラリが読み込まれるまで最大500ms待機
-    for (let i = 0; i < 10; i++) {
-      if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') break;
-      await new Promise(r => setTimeout(r, 50));
-    }
-
     try {
       const response = await fetch('./config.json');
       const config = await response.json();
-      if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
-        // Supabase JS v2 CDN は window.supabase.createClient として提供される
-        const sb = window.supabase || window.supabasejs;
-        if (sb && typeof sb.createClient === 'function') {
-          supabaseClient = sb.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-          console.log('✅ Supabase client created:', !!supabaseClient);
-        } else {
-          console.error('❌ Supabase createClient not found. window.supabase =', window.supabase);
-        }
+      if (config.GAS_WEB_APP_URL) {
+        gasAppUrl = config.GAS_WEB_APP_URL;
+        console.log('✅ GAS Web App configured');
       } else {
-        console.error('❌ config.json に SUPABASE_URL または SUPABASE_ANON_KEY が未設定:', config);
+        console.error('❌ config.json に GAS_WEB_APP_URL が未設定:', config);
       }
     } catch (e) {
-      console.error('❌ Failed to initialize Supabase:', e);
+      console.error('❌ Failed to initialize config:', e);
     }
-    await loadScoreSettings();
   },
 
   async getAll() {
-    if (!supabaseClient) return [];
+    if (!gasAppUrl) return [];
     try {
-      const { data, error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .select('*')
-        .order('code');
-      if (error) throw error;
-      return data.map(mapEvaluationFromDb);
+      // キャッシュを無視して常に最新データを取得するようパラメータ(t)を付与
+      const res = await fetch(`${gasAppUrl}?t=${new Date().getTime()}`, {
+        cache: 'no-store'
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data.map(mapEvaluationFromDb).sort((a,b) => a.code.localeCompare(b.code));
     } catch (e) {
       console.error('Failed to get all evaluations:', e);
       return [];
@@ -162,48 +164,28 @@ const DataStore = {
   },
 
   async getByIssue(issueKey) {
-    if (!supabaseClient) return [];
-    try {
-      const { data, error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .select('*')
-        .eq('issue_key', issueKey);
-      if (error) throw error;
-      return data.map(mapEvaluationFromDb);
-    } catch (e) {
-      console.error('Failed to get evaluations by issue:', e);
-      return [];
-    }
+    const all = await this.getAll();
+    return all.filter(item => item.issueKey === issueKey);
   },
 
   async getById(id) {
-    if (!supabaseClient) return null;
-    try {
-      const { data, error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .select('*')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      return mapEvaluationFromDb(data);
-    } catch (e) {
-      console.error('Failed to get evaluation by id:', e);
-      return null;
-    }
+    const all = await this.getAll();
+    return all.find(item => item.id === id) || null;
   },
 
   async add(item) {
-    if (!supabaseClient) return null;
+    if (!gasAppUrl) return null;
     try {
       const dbRow = mapEvaluationToDb(item);
-      delete dbRow.id; // 自動生成させる
-      const { data, error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .insert([dbRow])
-        .select()
-        .single();
-      if (error) throw error;
-      return mapEvaluationFromDb(data);
+      delete dbRow.id; // DB側で生成
+      const res = await fetch(gasAppUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'add', item: dbRow })
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return mapEvaluationFromDb(json.data);
     } catch (e) {
       console.error('Failed to add evaluation:', e);
       return null;
@@ -211,9 +193,8 @@ const DataStore = {
   },
 
   async update(id, updates) {
-    if (!supabaseClient) return null;
+    if (!gasAppUrl) return null;
     try {
-      // 部分更新に対応するため、updatesに存在するキーのみをDBカラム名にマッピングして更新オブジェクトを作成します
       const dbRow = {};
       const keyMapping = {
         issueYear: 'issue_year',
@@ -242,7 +223,13 @@ const DataStore = {
         ratings: 'ratings',
         keywords: 'keywords',
         industry: 'industry',
-        status: 'status'
+        status: 'status',
+        dividendScore: 'dividend_score',
+        financialScore: 'financial_score',
+        earningScore: 'earning_score',
+        futureScore: 'future_score',
+        valuationScore: 'valuation_score',
+        shikihoComment: 'shikiho_comment'
       };
 
       for (const [jsKey, dbKey] of Object.entries(keyMapping)) {
@@ -250,16 +237,15 @@ const DataStore = {
           dbRow[dbKey] = updates[jsKey];
         }
       }
-      dbRow.updated_at = new Date().toISOString();
 
-      const { data, error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .update(dbRow)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return mapEvaluationFromDb(data);
+      const res = await fetch(gasAppUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'update', id: id, updates: dbRow })
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return true;
     } catch (e) {
       console.error('Failed to update evaluation:', e);
       return null;
@@ -267,32 +253,25 @@ const DataStore = {
   },
 
   async remove(id) {
-    if (!supabaseClient) return;
+    if (!gasAppUrl) return;
     try {
-      const { error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      const res = await fetch(gasAppUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'delete', id: id })
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
     } catch (e) {
       console.error('Failed to delete evaluation:', e);
     }
   },
 
   async getIssueKeys() {
-    if (!supabaseClient) return [];
-    try {
-      const { data, error } = await supabaseClient
-        .from('shikiho_evaluations')
-        .select('issue_key');
-      if (error) throw error;
-      const keys = new Set();
-      data.forEach(d => keys.add(d.issue_key));
-      return Array.from(keys).sort().reverse();
-    } catch (e) {
-      console.error('Failed to get issue keys:', e);
-      return [];
-    }
+    const all = await this.getAll();
+    const keys = new Set();
+    all.forEach(d => keys.add(d.issueKey));
+    return Array.from(keys).sort().reverse();
   },
 
   async exportAll() {
@@ -301,58 +280,23 @@ const DataStore = {
   },
 
   async importAll(jsonStr) {
-    if (!supabaseClient) return;
-    const parsed = JSON.parse(jsonStr);
-    if (!Array.isArray(parsed)) throw new Error('Invalid format');
-    
-    // 全て削除したのち、バルクインサートする
-    const { error: delErr } = await supabaseClient.from('shikiho_evaluations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (delErr) throw delErr;
-
-    const dbRows = parsed.map(mapEvaluationToDb);
-    const chunkSize = 100;
-    for (let i = 0; i < dbRows.length; i += chunkSize) {
-      const chunk = dbRows.slice(i, i + chunkSize);
-      const { error } = await supabaseClient.from('shikiho_evaluations').insert(chunk);
-      if (error) throw error;
-    }
+    alert('一括インポート機能は現在スプレッドシート(GAS)版ではサポートされていません。直接スプレッドシートに貼り付けてください。');
   }
 };
 
 async function loadScoreSettings() {
-  if (!supabaseClient) return;
-  try {
-    const { data, error } = await supabaseClient.from('score_settings').select('*');
-    if (error) throw error;
-    scoreSettingsMap = {};
-    data.forEach(item => {
-      scoreSettingsMap[item.item_no] = item;
-    });
-  } catch (e) {
-    console.error('Failed to load score settings:', e);
-  }
+  // スプレッドシート(GAS)版では未実装のためスタブとして機能
+  scoreSettingsMap = {};
 }
 
 // ============================================================
 // Brand Master Autocomplete Lookup
 // ============================================================
 async function searchBrandFromDb(query) {
-  if (!supabaseClient) return [];
-  try {
-    const { data, error } = await supabaseClient
-      .from('brand_master')
-      .select('code, name')
-      .like('code', `${query}%`)
-      .limit(10);
-    if (error) throw error;
-    return data;
-  } catch (e) {
-    console.error('Failed to search brand from DB:', e);
-    if (typeof searchStocks === 'function') {
-      return searchStocks(query);
-    }
-    return [];
+  if (typeof searchStocks === 'function') {
+    return searchStocks(query);
   }
+  return [];
 }
 
 async function lookupBrandName(code) {
@@ -785,11 +729,11 @@ function buildDetailHTML(item) {
         <span class="overall-grade overall-${overall}" style="font-size:1.1rem; padding:6px 16px;">総合 ${overall}</span>
       </div>
       <div class="rating-grid">
-        ${buildRatingItem('配当力', item.ratings?.dividendPower)}
-        ${buildRatingItem('財務安全', item.ratings?.financialSafety)}
-        ${buildRatingItem('稼ぐ力', item.ratings?.earningsPower)}
-        ${buildRatingItem('将来性', item.ratings?.futureScenario)}
-        ${buildRatingItem('割安度', item.ratings?.valueGap)}
+        ${buildRatingItem('配当力', item.ratings?.dividendPower, item.dividendScore)}
+        ${buildRatingItem('財務安全', item.ratings?.financialSafety, item.financialScore)}
+        ${buildRatingItem('稼ぐ力', item.ratings?.earningsPower, item.earningScore)}
+        ${buildRatingItem('将来性', item.ratings?.futureScenario, item.futureScore)}
+        ${buildRatingItem('割安度', item.ratings?.valueGap, item.valuationScore)}
       </div>
     </div>
   `;
@@ -847,7 +791,7 @@ function buildDetailHTML(item) {
   }
 
   // Articles
-  if (item.businessArticle || item.materialArticle) {
+  if (item.businessArticle || item.materialArticle || item.shikihoComment) {
     html += `<div class="detail-section">`;
     html += `<div class="detail-section-title">四季報記事</div>`;
     if (item.businessArticle) {
@@ -860,9 +804,17 @@ function buildDetailHTML(item) {
     }
     if (item.materialArticle) {
       html += `
-        <div>
+        <div style="margin-bottom:var(--spacing-sm);">
           <div class="detail-article-label">💡 材料記事</div>
           <div class="detail-article">${escapeHtml(item.materialArticle)}</div>
+        </div>
+      `;
+    }
+    if (item.shikihoComment) {
+      html += `
+        <div>
+          <div class="detail-article-label">💬 四季報コメント</div>
+          <div class="detail-article">${escapeHtml(item.shikihoComment)}</div>
         </div>
       `;
     }
@@ -882,11 +834,12 @@ function buildDetailHTML(item) {
   return html;
 }
 
-function buildRatingItem(label, rating) {
+function buildRatingItem(label, rating, score) {
   return `
     <div class="rating-item">
       <div class="rating-item-label">${label}</div>
       ${rating ? `<span class="rating-badge rating-${rating}">${rating}</span>` : '<span style="color:var(--color-text-muted)">-</span>'}
+      ${score != null ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); margin-top:4px;">Score: ${score} pts</div>` : ''}
     </div>
   `;
 }
@@ -1013,6 +966,16 @@ function populateForm(item) {
     document.getElementById('inputRatingFuture').value = item.ratings.futureScenario || '';
     document.getElementById('inputRatingValue').value = item.ratings.valueGap || '';
   }
+  
+  // スコア（新設カラム）
+  document.getElementById('inputScoreDiv').value = item.dividendScore !== undefined && item.dividendScore !== null ? item.dividendScore : '';
+  document.getElementById('inputScoreFin').value = item.financialScore !== undefined && item.financialScore !== null ? item.financialScore : '';
+  document.getElementById('inputScoreEarn').value = item.earningScore !== undefined && item.earningScore !== null ? item.earningScore : '';
+  document.getElementById('inputScoreFuture').value = item.futureScore !== undefined && item.futureScore !== null ? item.futureScore : '';
+  document.getElementById('inputScoreValue').value = item.valuationScore !== undefined && item.valuationScore !== null ? item.valuationScore : '';
+  
+  // 四季報コメント
+  document.getElementById('inputShikihoComment').value = item.shikihoComment || '';
 }
 
 // 登録フォームでの自動計算の即時反映
@@ -1097,7 +1060,13 @@ function collectFormData() {
     marketCap: parseFloat(document.getElementById('inputMarketCap').value) || null,
     highDividendScore: { base: hdBase, bonus: hdBonus, total: hdBase + hdBonus },
     growthScore: { base: grBase, bonus: grBonus, total: grBase + grBonus },
-    ratings: ratings
+    ratings: ratings,
+    dividendScore: parseInt(document.getElementById('inputScoreDiv').value) || null,
+    financialScore: parseInt(document.getElementById('inputScoreFin').value) || null,
+    earningScore: parseInt(document.getElementById('inputScoreEarn').value) || null,
+    futureScore: parseInt(document.getElementById('inputScoreFuture').value) || null,
+    valuationScore: parseInt(document.getElementById('inputScoreValue').value) || null,
+    shikihoComment: document.getElementById('inputShikihoComment').value.trim()
   };
 }
 
