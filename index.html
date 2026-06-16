@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="会社四季報AI自動評価・一括管理ツール。四季報データから投資スコアとレーティングを自動算出。">
+  <meta name="theme-color" content="#6366f1">
+  <title>ShikihoAI - 四季報AI評価ツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="app-logo">
+        <div class="app-logo-icon">四</div>
+        <div>
+          <div class="app-title">ShikihoAI</div>
+          <div class="app-subtitle">四季報AI評価ツール</div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="issue-selector-group">
+          <select class="issue-select issue-year-select" id="issueYearSelect" title="年を選択">
+            <option value="2026">2026年</option>
+            <option value="2025">2025年</option>
+            <option value="2024">2024年</option>
+          </select>
+          <select class="issue-select issue-number-select" id="issueNumberSelect" title="号を選択">
+            <option value="3">3集 夏号</option>
+            <option value="2">2集 春号</option>
+            <option value="1">1集 新春号</option>
+            <option value="4">4集 秋号</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-ghost btn-sm" id="btnExport" title="エクスポート">📤 <span class="btn-label">保存</span></button>
+        <button class="btn btn-ghost btn-sm" id="btnImport" title="インポート">📥 <span class="btn-label">読込</span></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Toolbar ===== -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-ghost btn-sm" id="btnSyncMaster" style="margin-right: var(--spacing-sm);">📊 マスタ同期</button>
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="銘柄コード・社名で検索...">
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <span class="record-count" id="recordCount">0件</span>
+    </div>
+  </div>
+
+  <!-- ===== Data Table ===== -->
+  <div class="table-container">
+    <div class="data-table-wrapper">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th data-sort="code" style="width:70px">コード <span class="sort-icon">▼</span></th>
+            <th data-sort="name">社名 <span class="sort-icon">▼</span></th>
+            <th data-sort="industry" style="width:120px">業種 <span class="sort-icon">▼</span></th>
+            <th data-sort="status" style="width:130px">ステータス <span class="sort-icon">▼</span></th>
+            <th style="width:180px">キーワード</th>
+            <th data-sort="highDividend" style="width:100px" class="sorted" data-tooltip="基本100点＋記事加減点±50点">高配当 <span class="sort-icon">▼</span></th>
+            <th data-sort="growth" style="width:100px" data-tooltip="基本100点＋記事加減点±50点">成長株 <span class="sort-icon">▼</span></th>
+            <th data-sort="overall" style="width:65px" data-tooltip="総合的な投資評価">総合 <span class="sort-icon">▼</span></th>
+            <th data-sort="dividendPower" style="width:60px" class="col-center" data-tooltip="減配リスクの低さと利回りの総合評価">配当力 <span class="sort-icon">▼</span></th>
+            <th data-sort="financialSafety" style="width:60px" class="col-center" data-tooltip="倒産リスクの低さ、耐久力の評価">財務 <span class="sort-icon">▼</span></th>
+            <th data-sort="earningsPower" style="width:60px" class="col-center" data-tooltip="本業の黒字安定度、または利益率の評価">稼ぐ力 <span class="sort-icon">▼</span></th>
+            <th data-sort="futureScenario" style="width:60px" class="col-center" data-tooltip="中長期のポジティブ度の定性評価">将来性 <span class="sort-icon">▼</span></th>
+            <th data-sort="valueGap" style="width:60px" class="col-center" data-tooltip="現在の株価が高値掴みではないかの評価">割安度 <span class="sort-icon">▼</span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📊</div>
+        <div class="empty-title">この号にはまだ銘柄が登録されていません</div>
+        <div class="empty-desc">右下の「＋」ボタンから、四季報のデータを登録しましょう。<br>Gemini Gemで画像解析したJSONを貼り付けて一括入力できます。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FAB ===== -->
+  <button class="fab" id="fabAdd" title="新規登録">＋</button>
+
+  <!-- ===== Register Modal ===== -->
+  <div class="modal-overlay" id="registerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="registerModalTitle">📝 銘柄データ登録</span>
+        <button class="modal-close" id="registerModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="registerForm" autocomplete="off">
+          <input type="hidden" id="editId" value="">
+
+          <!-- Issue selector for registration -->
+          <div class="form-group">
+            <label class="form-label">登録先の号</label>
+            <div class="form-row form-row-2">
+              <select class="form-input" id="regIssueYear">
+                <option value="2026">2026年</option>
+                <option value="2025">2025年</option>
+                <option value="2024">2024年</option>
+              </select>
+              <select class="form-input" id="regIssueNumber">
+                <option value="1">1集 新春号</option>
+                <option value="2">2集 春号</option>
+                <option value="3">3集 夏号</option>
+                <option value="4">4集 秋号</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- JSON Paste Section -->
+          <div class="json-input-section">
+            <div class="section-title">🤖 Gemini JSON入力</div>
+            <textarea class="json-textarea" id="jsonInputText" placeholder='ここにGemini Gemから出力されたJSONを貼り付けてください。
+
+例：
+{
+  "code": "7203",
+  "name": "トヨタ自動車",
+  "businessArticle": "【増額】北米販売好調...",
+  "equityRatio": 39.8,
+  "dividendYield": 3.2,
+  "per": 10.8,
+  "pbr": 1.15,
+  ...
+}'></textarea>
+            <button type="button" class="btn btn-primary btn-sm" id="btnParseJson" style="margin-top:8px; width:100%;">⚡ JSONを解析して入力</button>
+            <div class="json-preview" id="jsonPreview"></div>
+          </div>
+
+          <!-- Manual Fields -->
+          <div class="form-group">
+            <label class="form-label">銘柄コード</label>
+            <div class="stock-input-wrap">
+              <input type="text" class="form-input" id="inputCode" placeholder="例: 7203" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+              <div class="suggestion-list" id="suggestionList"></div>
+            </div>
+            <div class="stock-name-display empty" id="stockNameDisplay">コードを入力してください</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">社名（自動入力）</label>
+            <input type="text" class="form-input" id="inputName" placeholder="銘柄コード入力で自動反映">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">業種（自動入力）</label>
+            <input type="text" class="form-input" id="inputIndustry" placeholder="銘柄コード入力で自動反映">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ステータス（保有状況・注目度）</label>
+            <select class="form-input" id="inputStatus">
+              <option value="">- 未設定 -</option>
+              <option value="配当保有">配当保有</option>
+              <option value="成長保有">成長保有</option>
+              <option value="優待保有">優待保有</option>
+              <option value="要注目">要注目</option>
+              <option value="様子見">様子見</option>
+              <option value="新規">新規</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">キーワード（2個程度、カンマ区切り）</label>
+            <input type="text" class="form-input" id="inputKeywords" placeholder="例: HV比率上昇, 全固体電池">
+          </div>
+
+          <!-- Articles -->
+          <div class="form-group">
+            <label class="form-label">業績記事</label>
+            <textarea class="form-input" id="inputBusinessArticle" rows="2" placeholder="四季報の業績記事テキスト..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">材料記事</label>
+            <textarea class="form-input" id="inputMaterialArticle" rows="2" placeholder="四季報の材料記事テキスト..."></textarea>
+          </div>
+
+          <!-- Financial Data -->
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">自己資本比率（%）</label>
+              <input type="number" class="form-input" id="inputEquityRatio" placeholder="例: 45.2" step="0.1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">利益剰余金（億円）</label>
+              <input type="number" class="form-input" id="inputRetainedEarnings" placeholder="例: 28000" step="1">
+            </div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">有利子負債（億円）</label>
+              <input type="number" class="form-input" id="inputDebt" placeholder="例: 15000" step="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ROE（%）</label>
+              <input type="number" class="form-input" id="inputRoe" placeholder="例: 14.2" step="0.1">
+            </div>
+          </div>
+
+          <!-- Dividend Data -->
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">配当利回り（%）</label>
+              <input type="number" class="form-input" id="inputDividendYield" placeholder="例: 3.2" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">配当性向（%）</label>
+              <input type="number" class="form-input" id="inputPayoutRatio" placeholder="例: 30.5" step="0.1">
+            </div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">今期予想配当（円）</label>
+              <input type="number" class="form-input" id="inputDividendCurrent" placeholder="例: 90" step="0.1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">来期予想配当（円）</label>
+              <input type="number" class="form-input" id="inputDividendNext" placeholder="例: 100" step="0.1">
+            </div>
+          </div>
+
+          <!-- Stock Valuation -->
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">PER（倍）</label>
+              <input type="number" class="form-input" id="inputPer" placeholder="例: 10.8" step="0.1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">PBR（倍）</label>
+              <input type="number" class="form-input" id="inputPbr" placeholder="例: 1.15" step="0.01">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">時価総額（億円）</label>
+            <input type="number" class="form-input" id="inputMarketCap" placeholder="例: 420000" step="1">
+          </div>
+
+          <!-- Shareholders -->
+          <div class="form-group">
+            <label class="form-label">主要株主</label>
+            <textarea class="form-input" id="inputShareholders" rows="2" placeholder="主要株主情報..."></textarea>
+          </div>
+
+          <!-- Earnings rows (simplified for Phase 1) -->
+          <div class="form-group">
+            <label class="form-label">業績データ（JSON配列）</label>
+            <textarea class="form-input" id="inputEarnings" rows="3" placeholder='[{"period":"2024.3","revenue":45095,"opProfit":5353,"netProfit":4944}]'></textarea>
+            <div class="form-hint">※ JSONを解析した場合は自動入力されます</div>
+          </div>
+
+          <!-- Scores (manual override or auto-calculated) -->
+          <div class="form-group">
+            <label class="form-label">高配当株スコア</label>
+            <div class="form-row form-row-2">
+              <input type="number" class="form-input" id="inputHdBase" placeholder="基本点" step="1">
+              <input type="number" class="form-input" id="inputHdBonus" placeholder="加減点" step="1">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">成長株スコア</label>
+            <div class="form-row form-row-2">
+              <input type="number" class="form-input" id="inputGrBase" placeholder="基本点" step="1">
+              <input type="number" class="form-input" id="inputGrBonus" placeholder="加減点" step="1">
+            </div>
+          </div>
+
+          <!-- Ratings -->
+          <div class="form-group">
+            <label class="form-label">5大評価（S, A, B, C, D, E）</label>
+            <div class="form-row" style="grid-template-columns: repeat(5, 1fr); gap:8px;">
+              <div>
+                <label class="form-label" style="font-size:0.6rem">配当力</label>
+                <select class="form-input" id="inputRatingDiv" style="padding:6px 8px; font-size:0.8rem;">
+                  <option value="">-</option>
+                  <option value="S">S</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.6rem">財務</label>
+                <select class="form-input" id="inputRatingFin" style="padding:6px 8px; font-size:0.8rem;">
+                  <option value="">-</option>
+                  <option value="S">S</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.6rem">稼ぐ力</label>
+                <select class="form-input" id="inputRatingEarn" style="padding:6px 8px; font-size:0.8rem;">
+                  <option value="">-</option>
+                  <option value="S">S</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.6rem">将来性</label>
+                <select class="form-input" id="inputRatingFuture" style="padding:6px 8px; font-size:0.8rem;">
+                  <option value="">-</option>
+                  <option value="S">S</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.6rem">割安度</label>
+                <select class="form-input" id="inputRatingValue" style="padding:6px 8px; font-size:0.8rem;">
+                  <option value="">-</option>
+                  <option value="S">S</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCancelForm">キャンセル</button>
+        <button class="btn btn-primary" id="btnSaveForm">💾 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Detail Overlay ===== -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-header">
+        <div class="detail-stock-info">
+          <span class="detail-code" id="detailCode"></span>
+          <span class="detail-name" id="detailName"></span>
+        </div>
+        <button class="modal-close" id="detailClose">✕</button>
+      </div>
+      <div class="detail-content" id="detailContent">
+        <!-- Populated by JS -->
+      </div>
+      <div class="detail-actions">
+        <button class="btn btn-ghost btn-sm" id="btnDetailEdit">✏️ 編集</button>
+        <button class="btn btn-danger btn-sm" id="btnDetailDelete">🗑️ 削除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Confirm Dialog ===== -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-dialog">
+      <div class="confirm-message" id="confirmMessage"></div>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="btnConfirmCancel">キャンセル</button>
+        <button class="btn btn-danger" id="btnConfirmOk">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Export Modal ===== -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="exportModalTitle">データ管理</span>
+        <button class="modal-close" id="exportModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="exportContent">
+          <p style="font-size:var(--font-size-sm); color:var(--color-text-secondary); margin-bottom:var(--spacing-md);">
+            全データをJSON形式でエクスポートします。バックアップやデータ移行に使用してください。
+          </p>
+          <textarea class="export-textarea" id="exportTextarea" readonly></textarea>
+        </div>
+        <div id="importContent" style="display:none">
+          <p style="font-size:var(--font-size-sm); color:var(--color-text-secondary); margin-bottom:var(--spacing-md);">
+            エクスポートしたJSONデータを貼り付けてインポートします。<br>
+            <strong style="color:var(--color-negative);">※ 既存データは全て上書きされます</strong>
+          </p>
+          <textarea class="export-textarea" id="importTextarea" placeholder="ここにJSONデータを貼り付け..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnExportClose">閉じる</button>
+        <button class="btn btn-primary" id="btnCopyExport">📋 コピー</button>
+        <button class="btn btn-primary" id="btnDoImport" style="display:none">📥 インポート実行</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== Hidden file input ===== -->
+  <input type="file" class="hidden-input" id="fileInput" accept=".json">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.0/dist/umd/supabase.js"></script>
+  <script src="stocks.js"></script>
+  <script src="demo-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
