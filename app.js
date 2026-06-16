@@ -1123,6 +1123,12 @@ async function applyParsedJson(data) {
     per: 'inputPer',
     pbr: 'inputPbr',
     marketCap: 'inputMarketCap',
+    dividendScore: 'inputScoreDiv',
+    financialScore: 'inputScoreFin',
+    earningScore: 'inputScoreEarn',
+    futureScore: 'inputScoreFuture',
+    valuationScore: 'inputScoreValue',
+    shikihoComment: 'inputShikihoComment'
   };
 
   for (const [key, inputId] of Object.entries(mapping)) {
