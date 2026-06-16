@@ -432,7 +432,7 @@ async function renderTable() {
   if (AppState.searchQuery) {
     const q = AppState.searchQuery.toLowerCase();
     data = data.filter(d =>
-      (d.code && d.code.includes(q)) ||
+      (d.code && String(d.code).includes(q)) ||
       (d.name && d.name.toLowerCase().includes(q))
     );
   }
@@ -1473,8 +1473,9 @@ function initEvents() {
   document.getElementById('btnCopyExport').addEventListener('click', doExportCopy);
   document.getElementById('btnDoImport').addEventListener('click', doImport);
 
-  // Sync Button
-  document.getElementById('btnSyncMaster').addEventListener('click', syncMasterData);
+  // Sync Button (optional - only attach if element exists)
+  const btnSync = document.getElementById('btnSyncMaster');
+  if (btnSync) btnSync.addEventListener('click', syncMasterData);
 
   // Escape key
   document.addEventListener('keydown', (e) => {
