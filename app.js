@@ -156,7 +156,7 @@ const DataStore = {
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      return json.data.map(mapEvaluationFromDb).sort((a,b) => a.code.localeCompare(b.code));
+      return json.data.map(mapEvaluationFromDb).sort((a,b) => String(a.code || '').localeCompare(String(b.code || '')));
     } catch (e) {
       console.error('Failed to get all evaluations:', e);
       return [];
