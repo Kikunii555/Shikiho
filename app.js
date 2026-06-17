@@ -336,8 +336,29 @@ const DataStore = {
 };
 
 async function loadScoreSettings() {
-  // スプレッドシート(GAS)版では未実装のためスタブとして機能
-  scoreSettingsMap = {};
+  if (!gasAppUrl) return;
+  try {
+    const res = await fetch(`${gasAppUrl}?sheet=score_settings&t=${new Date().getTime()}`, {
+      cache: 'no-store'
+    });
+    const json = await res.json();
+    if (json.success) {
+      scoreSettingsMap = {};
+      json.data.forEach(item => {
+        scoreSettingsMap[item.item_no] = {
+          item_name: item.item_name,
+          dividend_base_score: parseInt(item.dividend_base_score) || 0,
+          growth_base_score: parseInt(item.growth_base_score) || 0,
+          description: item.description || ''
+        };
+      });
+      console.log('✅ Score settings loaded:', scoreSettingsMap);
+    } else {
+      console.error('❌ Failed to load score settings from GAS:', json.error);
+    }
+  } catch (e) {
+    console.error('❌ Failed to load score settings:', e);
+  }
 }
 
 // ============================================================
@@ -1653,6 +1674,7 @@ function initEvents() {
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
   await DataStore.init();
+  await loadScoreSettings();
   initIssueSelector();
   initSort();
   initSearch();
