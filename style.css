@@ -1625,3 +1625,16 @@ textarea.form-input {
   margin-right: var(--spacing-md);
   white-space: nowrap;
 }
+
+/* ========================================
+   Financial Indicators Status Colors
+   ======================================== */
+.val-status-good {
+  color: #dc2626 !important; /* 赤（良い） */
+  font-weight: 600 !important;
+}
+
+.val-status-bad {
+  color: #2563eb !important; /* 青（悪い） */
+  font-weight: 600 !important;
+}

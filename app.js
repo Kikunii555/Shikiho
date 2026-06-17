@@ -889,42 +889,46 @@ function buildDetailHTML(item) {
     </div>
   `;
 
+  // 財務比率計算
+  const debtRatio = (item.retainedEarnings && item.interestBearingDebt) ? item.interestBearingDebt / item.retainedEarnings : null;
+  const debtStatusClass = getFinancialStatusClass('debtRatio', debtRatio);
+
   // Financial Data
   html += `
     <div class="detail-section">
       <div class="detail-section-title">財務・配当データ</div>
       <div class="detail-data-grid">
-        ${buildDataItem('自己資本比率', item.equityRatio != null ? item.equityRatio + '%' : '-')}
-        ${buildDataItem('利益剰余金', item.retainedEarnings != null ? item.retainedEarnings.toLocaleString() + '億円' : '-')}
-        ${buildDataItem('有利子負債', item.interestBearingDebt != null ? item.interestBearingDebt.toLocaleString() + '億円' : '-')}
-        ${buildDataItem('ROE', item.roe != null ? item.roe + '%' : '-')}
-        ${buildDataItem('配当利回り', item.dividendYield != null ? item.dividendYield + '%' : '-')}
-        ${buildDataItem('配当性向', item.payoutRatio != null ? item.payoutRatio + '%' : '-')}
+        ${buildDataItem('自己資本比率', item.equityRatio != null ? item.equityRatio + '%' : '-', getFinancialStatusClass('equityRatio', item.equityRatio))}
+        ${buildDataItem('利益剰余金', item.retainedEarnings != null ? item.retainedEarnings.toLocaleString() + '億円' : '-', debtStatusClass)}
+        ${buildDataItem('有利子負債', item.interestBearingDebt != null ? item.interestBearingDebt.toLocaleString() + '億円' : '-', debtStatusClass)}
+        ${buildDataItem('ROE', item.roe != null ? item.roe + '%' : '-', getFinancialStatusClass('roe', item.roe))}
+        ${buildDataItem('配当利回り', item.dividendYield != null ? item.dividendYield + '%' : '-', getFinancialStatusClass('dividendYield', item.dividendYield))}
+        ${buildDataItem('配当性向', item.payoutRatio != null ? item.payoutRatio + '%' : '-', getFinancialStatusClass('payoutRatio', item.payoutRatio))}
         ${buildDataItem('今期配当', item.dividendCurrent != null ? item.dividendCurrent + '円' : '-')}
         ${buildDataItem('来期配当', item.dividendNext != null ? item.dividendNext + '円' : '-')}
-        ${buildDataItem('PER', item.per != null ? item.per + '倍' : '-')}
-        ${buildDataItem('PBR', item.pbr != null ? item.pbr + '倍' : '-')}
+        ${buildDataItem('PER', item.per != null ? item.per + '倍' : '-', getFinancialStatusClass('per', item.per))}
+        ${buildDataItem('PBR', item.pbr != null ? item.pbr + '倍' : '-', getFinancialStatusClass('pbr', item.pbr))}
         ${buildDataItem('時価総額', item.marketCap != null ? item.marketCap.toLocaleString() + '億円' : '-')}
       </div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">収益性・成長性</div>
       <div class="detail-data-grid">
-        ${buildDataItem('営業利益率', item.opMargin != null ? item.opMargin + '%' : '-')}
-        ${buildDataItem('経常利益率', item.ordinaryMargin != null ? item.ordinaryMargin + '%' : '-')}
+        ${buildDataItem('営業利益率', item.opMargin != null ? item.opMargin + '%' : '-', getFinancialStatusClass('opMargin', item.opMargin))}
+        ${buildDataItem('経常利益率', item.ordinaryMargin != null ? item.ordinaryMargin + '%' : '-', getFinancialStatusClass('ordinaryMargin', item.ordinaryMargin))}
         ${buildDataItem('EPS', item.eps != null ? item.eps + '円' : '-')}
         ${buildDataItem('BPS', item.bps != null ? item.bps + '円' : '-')}
-        ${buildDataItem('売上成長率', item.revenueGrowth != null ? item.revenueGrowth + '%' : '-')}
-        ${buildDataItem('営業利益成長率', item.opProfitGrowth != null ? item.opProfitGrowth + '%' : '-')}
-        ${buildDataItem('EPS成長率', item.epsGrowth != null ? item.epsGrowth + '%' : '-')}
+        ${buildDataItem('売上成長率', item.revenueGrowth != null ? item.revenueGrowth + '%' : '-', getFinancialStatusClass('revenueGrowth', item.revenueGrowth))}
+        ${buildDataItem('営業利益成長率', item.opProfitGrowth != null ? item.opProfitGrowth + '%' : '-', getFinancialStatusClass('opProfitGrowth', item.opProfitGrowth))}
+        ${buildDataItem('EPS成長率', item.epsGrowth != null ? item.epsGrowth + '%' : '-', getFinancialStatusClass('epsGrowth', item.epsGrowth))}
       </div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">キャッシュフロー</div>
       <div class="detail-data-grid">
-        ${buildDataItem('営業CF', item.opCashflow != null ? item.opCashflow.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('営業CF', item.opCashflow != null ? item.opCashflow.toLocaleString() + '億円' : '-', getFinancialStatusClass('opCashflow', item.opCashflow))}
         ${buildDataItem('投資CF', item.invCashflow != null ? item.invCashflow.toLocaleString() + '億円' : '-')}
-        ${buildDataItem('フリーCF', item.freeCashflow != null ? item.freeCashflow.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('フリーCF', item.freeCashflow != null ? item.freeCashflow.toLocaleString() + '億円' : '-', getFinancialStatusClass('freeCashflow', item.freeCashflow))}
         ${buildDataItem('現金等', item.cashEquiv != null ? item.cashEquiv.toLocaleString() + '億円' : '-')}
       </div>
     </div>
@@ -1032,13 +1036,77 @@ function buildRatingItem(label, rating, score) {
   `;
 }
 
-function buildDataItem(label, value) {
+function buildDataItem(label, value, statusClass = '') {
   return `
     <div class="detail-data-item">
       <div class="detail-data-label">${label}</div>
-      <div class="detail-data-value">${value}</div>
+      <div class="detail-data-value ${statusClass}">${value}</div>
     </div>
   `;
+}
+
+function getFinancialStatusClass(key, value) {
+  if (value == null || isNaN(value)) return '';
+  
+  switch (key) {
+    case 'equityRatio': // 自己資本比率
+      if (value >= 70) return 'val-status-good';
+      if (value < 15) return 'val-status-bad';
+      break;
+    case 'roe': // ROE
+      if (value >= 15) return 'val-status-good';
+      if (value < 3) return 'val-status-bad';
+      break;
+    case 'dividendYield': // 配当利回り
+      if (value >= 4.0) return 'val-status-good';
+      if (value < 1.0) return 'val-status-bad';
+      break;
+    case 'payoutRatio': // 配当性向
+      if (value > 0 && value <= 40) return 'val-status-good';
+      if (value > 80 || value <= 0) return 'val-status-bad';
+      break;
+    case 'per': // PER
+      if (value > 0 && value <= 8.0) return 'val-status-good';
+      if (value > 25.0 || value <= 0) return 'val-status-bad';
+      break;
+    case 'pbr': // PBR
+      if (value > 0 && value <= 0.5) return 'val-status-good';
+      if (value > 2.5 || value <= 0) return 'val-status-bad';
+      break;
+    case 'opMargin': // 営業利益率
+      if (value >= 20.0) return 'val-status-good';
+      if (value < 3.0) return 'val-status-bad';
+      break;
+    case 'ordinaryMargin': // 経常利益率
+      if (value >= 20.0) return 'val-status-good';
+      if (value < 3.0) return 'val-status-bad';
+      break;
+    case 'revenueGrowth': // 売上成長率
+      if (value >= 20.0) return 'val-status-good';
+      if (value < 0) return 'val-status-bad';
+      break;
+    case 'opProfitGrowth': // 営業利益成長率
+      if (value >= 25.0) return 'val-status-good';
+      if (value < 0) return 'val-status-bad';
+      break;
+    case 'epsGrowth': // EPS成長率
+      if (value >= 20.0) return 'val-status-good';
+      if (value < 0) return 'val-status-bad';
+      break;
+    case 'debtRatio': // 有利子負債/利益剰余金比率
+      if (value <= 0.3) return 'val-status-good';
+      if (value >= 2.0) return 'val-status-bad';
+      break;
+    case 'freeCashflow': // フリーCF (単位: 億円)
+      if (value > 50) return 'val-status-good';
+      if (value < 0) return 'val-status-bad';
+      break;
+    case 'opCashflow': // 営業CF (単位: 億円)
+      if (value > 100) return 'val-status-good';
+      if (value < 0) return 'val-status-bad';
+      break;
+  }
+  return '';
 }
 
 function escapeHtml(str) {
