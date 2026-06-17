@@ -605,9 +605,17 @@ function renderStatusSelect(status) {
 function renderKeywords(keywords) {
   if (!keywords) return '<span style="color:var(--color-text-tertiary)">-</span>';
   return keywords.split(/[,，]/).map(kw => {
-    const trimKw = kw.trim();
+    let trimKw = kw.trim();
     if (!trimKw) return '';
-    return `<span class="keyword-tag">${escapeHtml(trimKw)}</span>`;
+    let tagClass = 'keyword-tag';
+    if (trimKw.startsWith('+')) {
+      tagClass = 'keyword-tag-positive';
+      trimKw = trimKw.substring(1);
+    } else if (trimKw.startsWith('-')) {
+      tagClass = 'keyword-tag-negative';
+      trimKw = trimKw.substring(1);
+    }
+    return `<span class="${tagClass}">${escapeHtml(trimKw)}</span>`;
   }).join('');
 }
 
@@ -710,6 +718,15 @@ async function showDetail(id) {
   document.getElementById('detailCode').textContent = item.code;
   document.getElementById('detailName').textContent = item.name;
 
+  const indEl = document.getElementById('detailIndustry');
+  if (item.industry) {
+    indEl.textContent = item.industry;
+    indEl.style.display = '';
+  } else {
+    indEl.textContent = '';
+    indEl.style.display = 'none';
+  }
+
   const content = document.getElementById('detailContent');
   content.innerHTML = buildDetailHTML(item);
 
@@ -727,12 +744,11 @@ function buildDetailHTML(item) {
   const overall = computeOverallGrade(item);
   let html = '';
 
-  // Industry & Status Badge at top
-  if (item.industry || item.status) {
+  // Status Badge at top
+  if (item.status) {
     html += `
       <div class="detail-section" style="margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap;">
-        ${item.status ? `<span class="status-badge status-${item.status}">${escapeHtml(item.status)}</span>` : ''}
-        ${item.industry ? `<span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); background: var(--color-bg); padding: 4px 12px; border-radius: 12px; border: 1px solid var(--color-border);">${escapeHtml(item.industry)}</span>` : ''}
+        <span class="status-badge status-${item.status}">${escapeHtml(item.status)}</span>
       </div>
     `;
   }
@@ -743,9 +759,20 @@ function buildDetailHTML(item) {
       <div class="detail-section" style="margin-bottom: var(--spacing-sm);">
         <div style="display: flex; flex-wrap: wrap; gap: 4px;">
           ${item.keywords.split(/[,，]/).map(kw => {
-            const trimKw = kw.trim();
+            let trimKw = kw.trim();
             if (!trimKw) return '';
-            return `<span class="keyword-tag" style="font-size:0.75rem; padding:3px 10px; margin: 0 4px 4px 0;"># ${escapeHtml(trimKw)}</span>`;
+            let tagClass = 'keyword-tag';
+            let prefix = '# ';
+            if (trimKw.startsWith('+')) {
+              tagClass = 'keyword-tag-positive';
+              prefix = '👍 ';
+              trimKw = trimKw.substring(1);
+            } else if (trimKw.startsWith('-')) {
+              tagClass = 'keyword-tag-negative';
+              prefix = '👎 ';
+              trimKw = trimKw.substring(1);
+            }
+            return `<span class="${tagClass}" style="font-size:0.75rem; padding:3px 10px; margin: 0 4px 4px 0;">${prefix}${escapeHtml(trimKw)}</span>`;
           }).join('')}
         </div>
       </div>
@@ -1008,7 +1035,25 @@ function populateForm(item) {
     });
   }
   document.getElementById('inputStatus').value = item.status || '';
-  document.getElementById('inputKeywords').value = item.keywords || '';
+  
+  let posKws = [];
+  let negKws = [];
+  if (item.keywords) {
+    item.keywords.split(/[,，]/).forEach(kw => {
+      const trimKw = kw.trim();
+      if (!trimKw) return;
+      if (trimKw.startsWith('+')) {
+        posKws.push(trimKw.substring(1));
+      } else if (trimKw.startsWith('-')) {
+        negKws.push(trimKw.substring(1));
+      } else {
+        // デフォルトはプラスキーワード扱い
+        posKws.push(trimKw);
+      }
+    });
+  }
+  document.getElementById('inputPositiveKeywords').value = posKws.join(', ');
+  document.getElementById('inputNegativeKeywords').value = negKws.join(', ');
   
   // 2. 📝 【特色・連結事業】
   document.getElementById('inputShareholders').value = item.shareholders || '';
@@ -1168,7 +1213,24 @@ function collectFormData() {
     name: document.getElementById('inputName').value.trim(),
     industry: document.getElementById('inputIndustry').value.trim(),
     status: document.getElementById('inputStatus').value,
-    keywords: document.getElementById('inputKeywords').value.trim(),
+    keywords: (() => {
+      const posText = document.getElementById('inputPositiveKeywords').value.trim();
+      const negText = document.getElementById('inputNegativeKeywords').value.trim();
+      const kws = [];
+      if (posText) {
+        posText.split(/[,，]/).forEach(kw => {
+          const trimKw = kw.trim();
+          if (trimKw) kws.push('+' + trimKw);
+        });
+      }
+      if (negText) {
+        negText.split(/[,，]/).forEach(kw => {
+          const trimKw = kw.trim();
+          if (trimKw) kws.push('-' + trimKw);
+        });
+      }
+      return kws.join(', ');
+    })(),
 
     // 2. 📝 【特色・連結事業】
     shareholders: document.getElementById('inputShareholders').value.trim(),
@@ -1338,11 +1400,31 @@ async function applyParsedJson(data) {
   }
 
   if (data.keywords) {
-    if (Array.isArray(data.keywords)) {
-      document.getElementById('inputKeywords').value = data.keywords.join(', ');
-    } else {
-      document.getElementById('inputKeywords').value = data.keywords;
-    }
+    const kws = Array.isArray(data.keywords) ? data.keywords : String(data.keywords).split(/[,，]/);
+    let posKws = [];
+    let negKws = [];
+    kws.forEach(kw => {
+      const trimKw = kw.trim();
+      if (!trimKw) return;
+      if (trimKw.startsWith('+')) {
+        posKws.push(trimKw.substring(1));
+      } else if (trimKw.startsWith('-')) {
+        negKws.push(trimKw.substring(1));
+      } else {
+        posKws.push(trimKw);
+      }
+    });
+    document.getElementById('inputPositiveKeywords').value = posKws.join(', ');
+    document.getElementById('inputNegativeKeywords').value = negKws.join(', ');
+  }
+
+  if (data.positiveKeywords) {
+    const pkws = Array.isArray(data.positiveKeywords) ? data.positiveKeywords : String(data.positiveKeywords).split(/[,，]/);
+    document.getElementById('inputPositiveKeywords').value = pkws.map(k => k.trim()).join(', ');
+  }
+  if (data.negativeKeywords) {
+    const nkws = Array.isArray(data.negativeKeywords) ? data.negativeKeywords : String(data.negativeKeywords).split(/[,，]/);
+    document.getElementById('inputNegativeKeywords').value = nkws.map(k => k.trim()).join(', ');
   }
 
   if (data.industry) {

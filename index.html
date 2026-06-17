@@ -177,8 +177,13 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">キーワード（2個程度、カンマ区切り）</label>
-            <input type="text" class="form-input" id="inputKeywords" placeholder="例: HV比率上昇, 全固体電池">
+            <label class="form-label">プラス面キーワード（3〜6個程度、カンマ区切り）</label>
+            <input type="text" class="form-input" id="inputPositiveKeywords" placeholder="例: HV比率上昇, 全固体電池, 最高益">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">マイナス面キーワード（3〜6個程度、カンマ区切り）</label>
+            <input type="text" class="form-input" id="inputNegativeKeywords" placeholder="例: 部材高騰, 円高デメリット, 競争激化">
           </div>
 
           <!-- 📝 【特色・連結事業】 -->
@@ -368,6 +373,7 @@
           <span class="detail-code" id="detailCode"></span>
           <span class="detail-name" id="detailName"></span>
         </div>
+        <span class="detail-industry-badge" id="detailIndustry"></span>
         <button class="modal-close" id="detailClose">✕</button>
       </div>
       <div class="detail-content" id="detailContent">
