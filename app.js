@@ -62,8 +62,8 @@ function mapEvaluationToDb(item) {
     id: item.id || undefined,
     issue_year: item.issueYear,
     issue_number: item.issueNumber,
-    issue_label: item.issueLabel ? "'" + item.issueLabel : '',
-    issue_key: item.issueKey ? "'" + item.issueKey : '',
+    issue_label: item.issueLabel ? (String(item.issueLabel).startsWith("'") ? item.issueLabel : "'" + item.issueLabel) : '',
+    issue_key: item.issueKey ? (String(item.issueKey).startsWith("'") ? item.issueKey : "'" + item.issueKey) : '',
     code: item.code,
     name: item.name,
     business_article: item.businessArticle,
@@ -84,7 +84,7 @@ function mapEvaluationToDb(item) {
     high_dividend_score: item.highDividendScore,
     growth_score: item.growthScore,
     ratings: item.ratings,
-    keywords: item.keywords ? "'" + item.keywords : '',
+    keywords: item.keywords ? (String(item.keywords).startsWith("'") ? item.keywords : "'" + item.keywords) : '',
     industry: item.industry,
     status: item.status,
     dividend_score: item.dividendScore,
@@ -334,7 +334,13 @@ const DataStore = {
 
       for (const [jsKey, dbKey] of Object.entries(keyMapping)) {
         if (updates[jsKey] !== undefined) {
-          dbRow[dbKey] = updates[jsKey];
+          let val = updates[jsKey];
+          if ((jsKey === 'issueKey' || jsKey === 'issueLabel' || jsKey === 'keywords') && val) {
+            if (typeof val === 'string' && !val.startsWith("'")) {
+              val = "'" + val;
+            }
+          }
+          dbRow[dbKey] = val;
         }
       }
 
