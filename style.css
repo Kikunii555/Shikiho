@@ -1558,3 +1558,19 @@ textarea.form-input {
 .status-badge.status-様子見 { background-color: #e0f2fe; color: #075985; border-color: #bae6fd; }
 .status-badge.status-新規 { background-color: #f1f5f9; color: #334155; border-color: #e2e8f0; }
 
+/* ========================================
+   Form Section Labels
+   ======================================== */
+.form-section-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 2px solid var(--color-primary-light);
+  letter-spacing: 0.02em;
+}
+
+.form-section-label:first-of-type {
+  margin-top: var(--spacing-md);
+}

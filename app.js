@@ -81,6 +81,23 @@ function mapEvaluationToDb(item) {
     future_score: item.futureScore,
     valuation_score: item.valuationScore,
     shikiho_comment: item.shikihoComment,
+    op_margin: item.opMargin,
+    ordinary_margin: item.ordinaryMargin,
+    eps: item.eps,
+    bps: item.bps,
+    revenue_growth: item.revenueGrowth,
+    op_profit_growth: item.opProfitGrowth,
+    eps_growth: item.epsGrowth,
+    op_cashflow: item.opCashflow,
+    inv_cashflow: item.invCashflow,
+    free_cashflow: item.freeCashflow,
+    cash_equiv: item.cashEquiv,
+    consec_div_years: item.consecDivYears,
+    doe: item.doe,
+    rnd_expense: item.rndExpense,
+    capex: item.capex,
+    employees: item.employees,
+    overseas_ratio: item.overseasRatio,
     updated_at: new Date().toISOString()
   };
 }
@@ -121,6 +138,23 @@ function mapEvaluationFromDb(row) {
     futureScore: row.future_score != null ? parseInt(row.future_score) : null,
     valuationScore: row.valuation_score != null ? parseInt(row.valuation_score) : null,
     shikihoComment: row.shikiho_comment || '',
+    opMargin: row.op_margin != null ? parseFloat(row.op_margin) : null,
+    ordinaryMargin: row.ordinary_margin != null ? parseFloat(row.ordinary_margin) : null,
+    eps: row.eps != null ? parseFloat(row.eps) : null,
+    bps: row.bps != null ? parseFloat(row.bps) : null,
+    revenueGrowth: row.revenue_growth != null ? parseFloat(row.revenue_growth) : null,
+    opProfitGrowth: row.op_profit_growth != null ? parseFloat(row.op_profit_growth) : null,
+    epsGrowth: row.eps_growth != null ? parseFloat(row.eps_growth) : null,
+    opCashflow: row.op_cashflow != null ? parseFloat(row.op_cashflow) : null,
+    invCashflow: row.inv_cashflow != null ? parseFloat(row.inv_cashflow) : null,
+    freeCashflow: row.free_cashflow != null ? parseFloat(row.free_cashflow) : null,
+    cashEquiv: row.cash_equiv != null ? parseFloat(row.cash_equiv) : null,
+    consecDivYears: row.consec_div_years != null ? parseInt(row.consec_div_years) : null,
+    doe: row.doe != null ? parseFloat(row.doe) : null,
+    rndExpense: row.rnd_expense != null ? parseFloat(row.rnd_expense) : null,
+    capex: row.capex != null ? parseFloat(row.capex) : null,
+    employees: row.employees != null ? parseInt(row.employees) : null,
+    overseasRatio: row.overseas_ratio != null ? parseFloat(row.overseas_ratio) : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -229,7 +263,24 @@ const DataStore = {
         earningScore: 'earning_score',
         futureScore: 'future_score',
         valuationScore: 'valuation_score',
-        shikihoComment: 'shikiho_comment'
+        shikihoComment: 'shikiho_comment',
+        opMargin: 'op_margin',
+        ordinaryMargin: 'ordinary_margin',
+        eps: 'eps',
+        bps: 'bps',
+        revenueGrowth: 'revenue_growth',
+        opProfitGrowth: 'op_profit_growth',
+        epsGrowth: 'eps_growth',
+        opCashflow: 'op_cashflow',
+        invCashflow: 'inv_cashflow',
+        freeCashflow: 'free_cashflow',
+        cashEquiv: 'cash_equiv',
+        consecDivYears: 'consec_div_years',
+        doe: 'doe',
+        rndExpense: 'rnd_expense',
+        capex: 'capex',
+        employees: 'employees',
+        overseasRatio: 'overseas_ratio'
       };
 
       for (const [jsKey, dbKey] of Object.entries(keyMapping)) {
@@ -738,6 +789,43 @@ function buildDetailHTML(item) {
         ${buildDataItem('時価総額', item.marketCap != null ? item.marketCap.toLocaleString() + '億円' : '-')}
       </div>
     </div>
+    <div class="detail-section">
+      <div class="detail-section-title">収益性・成長性</div>
+      <div class="detail-data-grid">
+        ${buildDataItem('営業利益率', item.opMargin != null ? item.opMargin + '%' : '-')}
+        ${buildDataItem('経常利益率', item.ordinaryMargin != null ? item.ordinaryMargin + '%' : '-')}
+        ${buildDataItem('EPS', item.eps != null ? item.eps + '円' : '-')}
+        ${buildDataItem('BPS', item.bps != null ? item.bps + '円' : '-')}
+        ${buildDataItem('売上成長率', item.revenueGrowth != null ? item.revenueGrowth + '%' : '-')}
+        ${buildDataItem('営業利益成長率', item.opProfitGrowth != null ? item.opProfitGrowth + '%' : '-')}
+        ${buildDataItem('EPS成長率', item.epsGrowth != null ? item.epsGrowth + '%' : '-')}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">キャッシュフロー</div>
+      <div class="detail-data-grid">
+        ${buildDataItem('営業CF', item.opCashflow != null ? item.opCashflow.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('投資CF', item.invCashflow != null ? item.invCashflow.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('フリーCF', item.freeCashflow != null ? item.freeCashflow.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('現金等', item.cashEquiv != null ? item.cashEquiv.toLocaleString() + '億円' : '-')}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">配当関連（拡充）</div>
+      <div class="detail-data-grid">
+        ${buildDataItem('連続増配年数', item.consecDivYears != null ? item.consecDivYears + '年' : '-')}
+        ${buildDataItem('DOE', item.doe != null ? item.doe + '%' : '-')}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">その他</div>
+      <div class="detail-data-grid">
+        ${buildDataItem('研究開発費', item.rndExpense != null ? item.rndExpense.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('設備投資', item.capex != null ? item.capex.toLocaleString() + '億円' : '-')}
+        ${buildDataItem('従業員数', item.employees != null ? item.employees.toLocaleString() + '人' : '-')}
+        ${buildDataItem('海外売上比率', item.overseasRatio != null ? item.overseasRatio + '%' : '-')}
+      </div>
+    </div>
   `;
 
   // Earnings Table
@@ -930,84 +1018,122 @@ function populateForm(item) {
     document.getElementById('inputEarnings').value = '';
   }
   
-  // スコア
-  if (item.highDividendScore) {
-    document.getElementById('inputHdBase').value = item.highDividendScore.base !== undefined ? item.highDividendScore.base : '';
-    document.getElementById('inputHdBonus').value = item.highDividendScore.bonus !== undefined ? item.highDividendScore.bonus : '';
-  }
-  if (item.growthScore) {
-    document.getElementById('inputGrBase').value = item.growthScore.base !== undefined ? item.growthScore.base : '';
-    document.getElementById('inputGrBonus').value = item.growthScore.bonus !== undefined ? item.growthScore.bonus : '';
-  }
-  
-  // 評価（レーティング）
-  if (item.ratings) {
-    document.getElementById('inputRatingDiv').value = item.ratings.dividendPower || '';
-    document.getElementById('inputRatingFin').value = item.ratings.financialSafety || '';
-    document.getElementById('inputRatingEarn').value = item.ratings.earningsPower || '';
-    document.getElementById('inputRatingFuture').value = item.ratings.futureScenario || '';
-    document.getElementById('inputRatingValue').value = item.ratings.valueGap || '';
-  }
-  
-  // スコア（新設カラム）
-  document.getElementById('inputScoreDiv').value = item.dividendScore !== undefined && item.dividendScore !== null ? item.dividendScore : '';
-  document.getElementById('inputScoreFin').value = item.financialScore !== undefined && item.financialScore !== null ? item.financialScore : '';
-  document.getElementById('inputScoreEarn').value = item.earningScore !== undefined && item.earningScore !== null ? item.earningScore : '';
-  document.getElementById('inputScoreFuture').value = item.futureScore !== undefined && item.futureScore !== null ? item.futureScore : '';
-  document.getElementById('inputScoreValue').value = item.valuationScore !== undefined && item.valuationScore !== null ? item.valuationScore : '';
+  // 新規フィールド（収益性・成長性・CF・配当拡充・その他）
+  if (item.opMargin != null) document.getElementById('inputOpMargin').value = item.opMargin;
+  if (item.ordinaryMargin != null) document.getElementById('inputOrdinaryMargin').value = item.ordinaryMargin;
+  if (item.eps != null) document.getElementById('inputEps').value = item.eps;
+  if (item.bps != null) document.getElementById('inputBps').value = item.bps;
+  if (item.revenueGrowth != null) document.getElementById('inputRevenueGrowth').value = item.revenueGrowth;
+  if (item.opProfitGrowth != null) document.getElementById('inputOpProfitGrowth').value = item.opProfitGrowth;
+  if (item.epsGrowth != null) document.getElementById('inputEpsGrowth').value = item.epsGrowth;
+  if (item.opCashflow != null) document.getElementById('inputOpCashflow').value = item.opCashflow;
+  if (item.invCashflow != null) document.getElementById('inputInvCashflow').value = item.invCashflow;
+  if (item.freeCashflow != null) document.getElementById('inputFreeCashflow').value = item.freeCashflow;
+  if (item.cashEquiv != null) document.getElementById('inputCashEquiv').value = item.cashEquiv;
+  if (item.consecDivYears != null) document.getElementById('inputConsecDivYears').value = item.consecDivYears;
+  if (item.doe != null) document.getElementById('inputDoe').value = item.doe;
+  if (item.rndExpense != null) document.getElementById('inputRndExpense').value = item.rndExpense;
+  if (item.capex != null) document.getElementById('inputCapex').value = item.capex;
+  if (item.employees != null) document.getElementById('inputEmployees').value = item.employees;
+  if (item.overseasRatio != null) document.getElementById('inputOverseasRatio').value = item.overseasRatio;
   
   // 四季報コメント
   document.getElementById('inputShikihoComment').value = item.shikihoComment || '';
 }
 
-// 登録フォームでの自動計算の即時反映
+// setupDynamicScoreEvents は手動レーティング廃止により不要（互換性のため空関数として残す）
 function setupDynamicScoreEvents() {
-  const ratingSelects = [
-    'inputRatingDiv',
-    'inputRatingFin',
-    'inputRatingEarn',
-    'inputRatingFuture',
-    'inputRatingValue'
-  ];
-  
-  ratingSelects.forEach(id => {
-    document.getElementById(id).addEventListener('change', () => {
-      const ratings = {
-        dividendPower: document.getElementById('inputRatingDiv').value,
-        financialSafety: document.getElementById('inputRatingFin').value,
-        earningsPower: document.getElementById('inputRatingEarn').value,
-        futureScenario: document.getElementById('inputRatingFuture').value,
-        valueGap: document.getElementById('inputRatingValue').value
-      };
-      
-      const hdBase = calculateBaseScore(ratings, 'highDividend');
-      const grBase = calculateBaseScore(ratings, 'growth');
-      
-      document.getElementById('inputHdBase').value = hdBase;
-      document.getElementById('inputGrBase').value = grBase;
-    });
-  });
+  // no-op: scores and ratings are now auto-calculated from raw data
+}
+
+// ============================================================
+// Auto-Rating Calculation (5大評価の自動算出)
+// ============================================================
+function autoCalculateRatings(data) {
+  const ratings = {
+    dividendPower: calcDividendPowerRating(data),
+    financialSafety: calcFinancialSafetyRating(data),
+    earningsPower: calcEarningsPowerRating(data),
+    futureScenario: calcFutureScenarioRating(data),
+    valueGap: calcValueGapRating(data)
+  };
+  return ratings;
+}
+
+function ratingFromScore(score) {
+  if (score >= 90) return 'S';
+  if (score >= 75) return 'A';
+  if (score >= 55) return 'B';
+  if (score >= 35) return 'C';
+  if (score >= 15) return 'D';
+  return 'E';
+}
+
+// 配当力: 配当利回り・連続増配年数・配当性向・DOE
+function calcDividendPowerRating(d) {
+  let score = 0, count = 0;
+  if (d.dividendYield != null) { count++; score += d.dividendYield >= 4 ? 100 : d.dividendYield >= 3 ? 80 : d.dividendYield >= 2 ? 60 : d.dividendYield >= 1 ? 40 : 20; }
+  if (d.consecDivYears != null) { count++; score += d.consecDivYears >= 20 ? 100 : d.consecDivYears >= 10 ? 80 : d.consecDivYears >= 5 ? 60 : d.consecDivYears >= 1 ? 40 : 20; }
+  if (d.payoutRatio != null) { count++; score += (d.payoutRatio > 0 && d.payoutRatio <= 40) ? 100 : d.payoutRatio <= 60 ? 80 : d.payoutRatio <= 80 ? 50 : 20; }
+  if (d.doe != null) { count++; score += d.doe >= 5 ? 100 : d.doe >= 3 ? 80 : d.doe >= 1.5 ? 60 : 30; }
+  if (d.dividendNext != null && d.dividendCurrent != null && d.dividendCurrent > 0) {
+    count++;
+    const divGrowth = ((d.dividendNext - d.dividendCurrent) / d.dividendCurrent) * 100;
+    score += divGrowth > 10 ? 100 : divGrowth > 0 ? 80 : divGrowth === 0 ? 50 : 20;
+  }
+  return count > 0 ? ratingFromScore(score / count) : null;
+}
+
+// 財務安全性: 自己資本比率・有利子負債/利益剰余金比率・現金等
+function calcFinancialSafetyRating(d) {
+  let score = 0, count = 0;
+  if (d.equityRatio != null) { count++; score += d.equityRatio >= 70 ? 100 : d.equityRatio >= 50 ? 80 : d.equityRatio >= 30 ? 60 : d.equityRatio >= 15 ? 40 : 20; }
+  if (d.retainedEarnings != null && d.interestBearingDebt != null && d.retainedEarnings > 0) {
+    count++;
+    const debtRatio = d.interestBearingDebt / d.retainedEarnings;
+    score += debtRatio <= 0.3 ? 100 : debtRatio <= 0.7 ? 80 : debtRatio <= 1.2 ? 60 : debtRatio <= 2 ? 40 : 20;
+  }
+  if (d.cashEquiv != null && d.interestBearingDebt != null && d.interestBearingDebt > 0) {
+    count++;
+    const cashCover = d.cashEquiv / d.interestBearingDebt;
+    score += cashCover >= 2 ? 100 : cashCover >= 1 ? 80 : cashCover >= 0.5 ? 60 : 30;
+  } else if (d.cashEquiv != null) {
+    count++; score += 90; // 無借金+現金保有
+  }
+  return count > 0 ? ratingFromScore(score / count) : null;
+}
+
+// 稼ぐ力: 営業利益率・ROE・EPS・営業CF
+function calcEarningsPowerRating(d) {
+  let score = 0, count = 0;
+  if (d.opMargin != null) { count++; score += d.opMargin >= 20 ? 100 : d.opMargin >= 12 ? 80 : d.opMargin >= 7 ? 60 : d.opMargin >= 3 ? 40 : 20; }
+  if (d.roe != null) { count++; score += d.roe >= 15 ? 100 : d.roe >= 10 ? 80 : d.roe >= 7 ? 60 : d.roe >= 3 ? 40 : 20; }
+  if (d.eps != null) { count++; score += d.eps >= 300 ? 100 : d.eps >= 150 ? 80 : d.eps >= 50 ? 60 : d.eps > 0 ? 40 : 15; }
+  if (d.opCashflow != null) { count++; score += d.opCashflow > 0 ? 80 : 20; }
+  return count > 0 ? ratingFromScore(score / count) : null;
+}
+
+// 将来性: 売上成長率・営業利益成長率・EPS成長率・記事の有無
+function calcFutureScenarioRating(d) {
+  let score = 0, count = 0;
+  if (d.revenueGrowth != null) { count++; score += d.revenueGrowth >= 20 ? 100 : d.revenueGrowth >= 10 ? 80 : d.revenueGrowth >= 5 ? 60 : d.revenueGrowth >= 0 ? 45 : 20; }
+  if (d.opProfitGrowth != null) { count++; score += d.opProfitGrowth >= 25 ? 100 : d.opProfitGrowth >= 10 ? 80 : d.opProfitGrowth >= 0 ? 55 : 20; }
+  if (d.epsGrowth != null) { count++; score += d.epsGrowth >= 20 ? 100 : d.epsGrowth >= 10 ? 80 : d.epsGrowth >= 0 ? 55 : 20; }
+  if (d.rndExpense != null && d.rndExpense > 0) { count++; score += 70; } // R&D投資ありは加点
+  return count > 0 ? ratingFromScore(score / count) : null;
+}
+
+// 割安度: PER・PBR
+function calcValueGapRating(d) {
+  let score = 0, count = 0;
+  if (d.per != null && d.per > 0) { count++; score += d.per <= 8 ? 100 : d.per <= 12 ? 80 : d.per <= 18 ? 60 : d.per <= 25 ? 40 : 20; }
+  if (d.pbr != null && d.pbr > 0) { count++; score += d.pbr <= 0.5 ? 100 : d.pbr <= 1.0 ? 80 : d.pbr <= 1.5 ? 60 : d.pbr <= 2.5 ? 40 : 20; }
+  return count > 0 ? ratingFromScore(score / count) : null;
 }
 
 function collectFormData() {
   const year = parseInt(document.getElementById('regIssueYear').value);
   const number = parseInt(document.getElementById('regIssueNumber').value);
-
-  const ratings = {
-    dividendPower: document.getElementById('inputRatingDiv').value || null,
-    financialSafety: document.getElementById('inputRatingFin').value || null,
-    earningsPower: document.getElementById('inputRatingEarn').value || null,
-    futureScenario: document.getElementById('inputRatingFuture').value || null,
-    valueGap: document.getElementById('inputRatingValue').value || null,
-  };
-
-  const hdBaseAuto = calculateBaseScore(ratings, 'highDividend');
-  const grBaseAuto = calculateBaseScore(ratings, 'growth');
-  
-  const hdBase = parseFloat(document.getElementById('inputHdBase').value) || hdBaseAuto;
-  const hdBonus = parseFloat(document.getElementById('inputHdBonus').value) || 0;
-  const grBase = parseFloat(document.getElementById('inputGrBase').value) || grBaseAuto;
-  const grBonus = parseFloat(document.getElementById('inputGrBonus').value) || 0;
 
   let earnings = [];
   try {
@@ -1015,7 +1141,7 @@ function collectFormData() {
     if (earningsStr) earnings = JSON.parse(earningsStr);
   } catch (e) { /* ignore */ }
 
-  return {
+  const rawData = {
     issueYear: year,
     issueNumber: number,
     issueLabel: getIssueLabel(year, number),
@@ -1040,16 +1166,38 @@ function collectFormData() {
     per: parseFloat(document.getElementById('inputPer').value) || null,
     pbr: parseFloat(document.getElementById('inputPbr').value) || null,
     marketCap: parseFloat(document.getElementById('inputMarketCap').value) || null,
-    highDividendScore: { base: hdBase, bonus: hdBonus, total: hdBase + hdBonus },
-    growthScore: { base: grBase, bonus: grBonus, total: grBase + grBonus },
-    ratings: ratings,
-    dividendScore: parseInt(document.getElementById('inputScoreDiv').value) || null,
-    financialScore: parseInt(document.getElementById('inputScoreFin').value) || null,
-    earningScore: parseInt(document.getElementById('inputScoreEarn').value) || null,
-    futureScore: parseInt(document.getElementById('inputScoreFuture').value) || null,
-    valuationScore: parseInt(document.getElementById('inputScoreValue').value) || null,
+    // 新規フィールド
+    opMargin: parseFloat(document.getElementById('inputOpMargin').value) || null,
+    ordinaryMargin: parseFloat(document.getElementById('inputOrdinaryMargin').value) || null,
+    eps: parseFloat(document.getElementById('inputEps').value) || null,
+    bps: parseFloat(document.getElementById('inputBps').value) || null,
+    revenueGrowth: parseFloat(document.getElementById('inputRevenueGrowth').value) || null,
+    opProfitGrowth: parseFloat(document.getElementById('inputOpProfitGrowth').value) || null,
+    epsGrowth: parseFloat(document.getElementById('inputEpsGrowth').value) || null,
+    opCashflow: parseFloat(document.getElementById('inputOpCashflow').value) || null,
+    invCashflow: parseFloat(document.getElementById('inputInvCashflow').value) || null,
+    freeCashflow: parseFloat(document.getElementById('inputFreeCashflow').value) || null,
+    cashEquiv: parseFloat(document.getElementById('inputCashEquiv').value) || null,
+    consecDivYears: parseInt(document.getElementById('inputConsecDivYears').value) || null,
+    doe: parseFloat(document.getElementById('inputDoe').value) || null,
+    rndExpense: parseFloat(document.getElementById('inputRndExpense').value) || null,
+    capex: parseFloat(document.getElementById('inputCapex').value) || null,
+    employees: parseInt(document.getElementById('inputEmployees').value) || null,
+    overseasRatio: parseFloat(document.getElementById('inputOverseasRatio').value) || null,
     shikihoComment: document.getElementById('inputShikihoComment').value.trim()
   };
+
+  // 自動計算: 5大評価レーティング
+  const ratings = autoCalculateRatings(rawData);
+  rawData.ratings = ratings;
+
+  // 自動計算: 高配当/成長スコア（レーティングベース。互換性のため残す）
+  const hdBase = calculateBaseScore(ratings, 'highDividend');
+  const grBase = calculateBaseScore(ratings, 'growth');
+  rawData.highDividendScore = { base: hdBase, bonus: 0, total: hdBase };
+  rawData.growthScore = { base: grBase, bonus: 0, total: grBase };
+
+  return rawData;
 }
 
 async function saveForm() {
@@ -1123,12 +1271,25 @@ async function applyParsedJson(data) {
     per: 'inputPer',
     pbr: 'inputPbr',
     marketCap: 'inputMarketCap',
-    dividendScore: 'inputScoreDiv',
-    financialScore: 'inputScoreFin',
-    earningScore: 'inputScoreEarn',
-    futureScore: 'inputScoreFuture',
-    valuationScore: 'inputScoreValue',
-    shikihoComment: 'inputShikihoComment'
+    shikihoComment: 'inputShikihoComment',
+    // 新規フィールド
+    opMargin: 'inputOpMargin',
+    ordinaryMargin: 'inputOrdinaryMargin',
+    eps: 'inputEps',
+    bps: 'inputBps',
+    revenueGrowth: 'inputRevenueGrowth',
+    opProfitGrowth: 'inputOpProfitGrowth',
+    epsGrowth: 'inputEpsGrowth',
+    opCashflow: 'inputOpCashflow',
+    invCashflow: 'inputInvCashflow',
+    freeCashflow: 'inputFreeCashflow',
+    cashEquiv: 'inputCashEquiv',
+    consecDivYears: 'inputConsecDivYears',
+    doe: 'inputDoe',
+    rndExpense: 'inputRndExpense',
+    capex: 'inputCapex',
+    employees: 'inputEmployees',
+    overseasRatio: 'inputOverseasRatio'
   };
 
   for (const [key, inputId] of Object.entries(mapping)) {
@@ -1158,40 +1319,6 @@ async function applyParsedJson(data) {
 
   if (data.earnings && Array.isArray(data.earnings)) {
     document.getElementById('inputEarnings').value = JSON.stringify(data.earnings);
-  }
-
-  if (data.ratings) {
-    const ratingMap = {
-      dividendPower: 'inputRatingDiv',
-      financialSafety: 'inputRatingFin',
-      earningsPower: 'inputRatingEarn',
-      futureScenario: 'inputRatingFuture',
-      valueGap: 'inputRatingValue',
-    };
-    for (const [key, inputId] of Object.entries(ratingMap)) {
-      if (data.ratings[key]) document.getElementById(inputId).value = data.ratings[key];
-    }
-  }
-
-  const ratings = {
-    dividendPower: document.getElementById('inputRatingDiv').value,
-    financialSafety: document.getElementById('inputRatingFin').value,
-    earningsPower: document.getElementById('inputRatingEarn').value,
-    futureScenario: document.getElementById('inputRatingFuture').value,
-    valueGap: document.getElementById('inputRatingValue').value
-  };
-  
-  const hdBase = calculateBaseScore(ratings, 'highDividend');
-  const grBase = calculateBaseScore(ratings, 'growth');
-  
-  document.getElementById('inputHdBase').value = hdBase;
-  document.getElementById('inputGrBase').value = grBase;
-
-  if (data.highDividendScore && data.highDividendScore.bonus != null) {
-    document.getElementById('inputHdBonus').value = data.highDividendScore.bonus;
-  }
-  if (data.growthScore && data.growthScore.bonus != null) {
-    document.getElementById('inputGrBonus').value = data.growthScore.bonus;
   }
 }
 
