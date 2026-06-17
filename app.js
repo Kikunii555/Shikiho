@@ -969,6 +969,7 @@ function closeRegisterModal() {
 }
 
 function populateForm(item) {
+  // 1. 🏢 銘柄基本情報
   if (item.issueYear !== undefined && item.issueYear !== null) document.getElementById('regIssueYear').value = item.issueYear;
   if (item.issueNumber !== undefined && item.issueNumber !== null) document.getElementById('regIssueNumber').value = item.issueNumber;
   if (item.code) {
@@ -976,10 +977,7 @@ function populateForm(item) {
     updateStockNameDisplay(item.code);
   }
   document.getElementById('inputName').value = item.name || '';
-
-  // 業種：まず保存済みの値を（空文字でも必ず）セットする
   document.getElementById('inputIndustry').value = item.industry || '';
-  // 保存済みの業種が空の場合のみ、brand_masterから非同期で補完（既存値は上書きしない）
   if (!item.industry && item.code) {
     lookupBrandDetail(item.code).then(detail => {
       const el = document.getElementById('inputIndustry');
@@ -988,56 +986,54 @@ function populateForm(item) {
       }
     });
   }
-  
-  // ステータス・キーワード
   document.getElementById('inputStatus').value = item.status || '';
   document.getElementById('inputKeywords').value = item.keywords || '';
   
-  // 記事・株主
+  // 2. 📝 【特色・連結事業】
+  document.getElementById('inputShareholders').value = item.shareholders || '';
+  if (item.employees != null) document.getElementById('inputEmployees').value = item.employees;
+  if (item.overseasRatio != null) document.getElementById('inputOverseasRatio').value = item.overseasRatio;
+
+  // 3. 📰 【業績】
   document.getElementById('inputBusinessArticle').value = item.businessArticle || '';
   document.getElementById('inputMaterialArticle').value = item.materialArticle || '';
-  document.getElementById('inputShareholders').value = item.shareholders || '';
-  
-  // 数値データ（0も許容するため null/undefined チェック）
-  if (item.equityRatio != null) document.getElementById('inputEquityRatio').value = item.equityRatio;
-  if (item.retainedEarnings != null) document.getElementById('inputRetainedEarnings').value = item.retainedEarnings;
-  if (item.interestBearingDebt != null) document.getElementById('inputDebt').value = item.interestBearingDebt;
-  if (item.roe != null) document.getElementById('inputRoe').value = item.roe;
-  if (item.dividendYield != null) document.getElementById('inputDividendYield').value = item.dividendYield;
-  if (item.payoutRatio != null) document.getElementById('inputPayoutRatio').value = item.payoutRatio;
-  if (item.dividendCurrent != null) document.getElementById('inputDividendCurrent').value = item.dividendCurrent;
-  if (item.dividendNext != null) document.getElementById('inputDividendNext').value = item.dividendNext;
-  if (item.per != null) document.getElementById('inputPer').value = item.per;
-  if (item.pbr != null) document.getElementById('inputPbr').value = item.pbr;
-  if (item.marketCap != null) document.getElementById('inputMarketCap').value = item.marketCap;
-  
-  // 業績データ（JSON）
   if (item.earnings && Array.isArray(item.earnings) && item.earnings.length > 0) {
     document.getElementById('inputEarnings').value = JSON.stringify(item.earnings, null, 2);
   } else {
     document.getElementById('inputEarnings').value = '';
   }
-  
-  // 新規フィールド（収益性・成長性・CF・配当拡充・その他）
-  if (item.opMargin != null) document.getElementById('inputOpMargin').value = item.opMargin;
-  if (item.ordinaryMargin != null) document.getElementById('inputOrdinaryMargin').value = item.ordinaryMargin;
   if (item.eps != null) document.getElementById('inputEps').value = item.eps;
   if (item.bps != null) document.getElementById('inputBps').value = item.bps;
   if (item.revenueGrowth != null) document.getElementById('inputRevenueGrowth').value = item.revenueGrowth;
   if (item.opProfitGrowth != null) document.getElementById('inputOpProfitGrowth').value = item.opProfitGrowth;
   if (item.epsGrowth != null) document.getElementById('inputEpsGrowth').value = item.epsGrowth;
+  
+  // 4. 💰 【財務・キャッシュフロー】
+  if (item.equityRatio != null) document.getElementById('inputEquityRatio').value = item.equityRatio;
+  if (item.retainedEarnings != null) document.getElementById('inputRetainedEarnings').value = item.retainedEarnings;
+  if (item.interestBearingDebt != null) document.getElementById('inputDebt').value = item.interestBearingDebt;
+  if (item.cashEquiv != null) document.getElementById('inputCashEquiv').value = item.cashEquiv;
   if (item.opCashflow != null) document.getElementById('inputOpCashflow').value = item.opCashflow;
   if (item.invCashflow != null) document.getElementById('inputInvCashflow').value = item.invCashflow;
   if (item.freeCashflow != null) document.getElementById('inputFreeCashflow').value = item.freeCashflow;
-  if (item.cashEquiv != null) document.getElementById('inputCashEquiv').value = item.cashEquiv;
+  
+  // 5. 📊 【株価・指標・配当】
+  if (item.marketCap != null) document.getElementById('inputMarketCap').value = item.marketCap;
+  if (item.per != null) document.getElementById('inputPer').value = item.per;
+  if (item.pbr != null) document.getElementById('inputPbr').value = item.pbr;
+  if (item.roe != null) document.getElementById('inputRoe').value = item.roe;
+  if (item.opMargin != null) document.getElementById('inputOpMargin').value = item.opMargin;
+  if (item.ordinaryMargin != null) document.getElementById('inputOrdinaryMargin').value = item.ordinaryMargin;
+  if (item.dividendYield != null) document.getElementById('inputDividendYield').value = item.dividendYield;
+  if (item.payoutRatio != null) document.getElementById('inputPayoutRatio').value = item.payoutRatio;
+  if (item.dividendCurrent != null) document.getElementById('inputDividendCurrent').value = item.dividendCurrent;
+  if (item.dividendNext != null) document.getElementById('inputDividendNext').value = item.dividendNext;
   if (item.consecDivYears != null) document.getElementById('inputConsecDivYears').value = item.consecDivYears;
   if (item.doe != null) document.getElementById('inputDoe').value = item.doe;
   if (item.rndExpense != null) document.getElementById('inputRndExpense').value = item.rndExpense;
   if (item.capex != null) document.getElementById('inputCapex').value = item.capex;
-  if (item.employees != null) document.getElementById('inputEmployees').value = item.employees;
-  if (item.overseasRatio != null) document.getElementById('inputOverseasRatio').value = item.overseasRatio;
   
-  // 四季報コメント
+  // 6. 💬 ユーザーメモ
   document.getElementById('inputShikihoComment').value = item.shikihoComment || '';
 }
 
@@ -1142,6 +1138,7 @@ function collectFormData() {
   } catch (e) { /* ignore */ }
 
   const rawData = {
+    // 1. 🏢 銘柄基本情報
     issueYear: year,
     issueNumber: number,
     issueLabel: getIssueLabel(year, number),
@@ -1151,39 +1148,48 @@ function collectFormData() {
     industry: document.getElementById('inputIndustry').value.trim(),
     status: document.getElementById('inputStatus').value,
     keywords: document.getElementById('inputKeywords').value.trim(),
+
+    // 2. 📝 【特色・連結事業】
+    shareholders: document.getElementById('inputShareholders').value.trim(),
+    employees: parseInt(document.getElementById('inputEmployees').value) || null,
+    overseasRatio: parseFloat(document.getElementById('inputOverseasRatio').value) || null,
+
+    // 3. 📰 【業績】
     businessArticle: document.getElementById('inputBusinessArticle').value.trim(),
     materialArticle: document.getElementById('inputMaterialArticle').value.trim(),
-    shareholders: document.getElementById('inputShareholders').value.trim(),
-    equityRatio: parseFloat(document.getElementById('inputEquityRatio').value) || null,
-    retainedEarnings: parseFloat(document.getElementById('inputRetainedEarnings').value) || null,
-    interestBearingDebt: parseFloat(document.getElementById('inputDebt').value) || null,
-    roe: parseFloat(document.getElementById('inputRoe').value) || null,
-    dividendCurrent: parseFloat(document.getElementById('inputDividendCurrent').value) || null,
-    dividendNext: parseFloat(document.getElementById('inputDividendNext').value) || null,
-    dividendYield: parseFloat(document.getElementById('inputDividendYield').value) || null,
-    payoutRatio: parseFloat(document.getElementById('inputPayoutRatio').value) || null,
     earnings: earnings,
-    per: parseFloat(document.getElementById('inputPer').value) || null,
-    pbr: parseFloat(document.getElementById('inputPbr').value) || null,
-    marketCap: parseFloat(document.getElementById('inputMarketCap').value) || null,
-    // 新規フィールド
-    opMargin: parseFloat(document.getElementById('inputOpMargin').value) || null,
-    ordinaryMargin: parseFloat(document.getElementById('inputOrdinaryMargin').value) || null,
     eps: parseFloat(document.getElementById('inputEps').value) || null,
     bps: parseFloat(document.getElementById('inputBps').value) || null,
     revenueGrowth: parseFloat(document.getElementById('inputRevenueGrowth').value) || null,
     opProfitGrowth: parseFloat(document.getElementById('inputOpProfitGrowth').value) || null,
     epsGrowth: parseFloat(document.getElementById('inputEpsGrowth').value) || null,
+
+    // 4. 💰 【財務・キャッシュフロー】
+    equityRatio: parseFloat(document.getElementById('inputEquityRatio').value) || null,
+    retainedEarnings: parseFloat(document.getElementById('inputRetainedEarnings').value) || null,
+    interestBearingDebt: parseFloat(document.getElementById('inputDebt').value) || null,
+    cashEquiv: parseFloat(document.getElementById('inputCashEquiv').value) || null,
     opCashflow: parseFloat(document.getElementById('inputOpCashflow').value) || null,
     invCashflow: parseFloat(document.getElementById('inputInvCashflow').value) || null,
     freeCashflow: parseFloat(document.getElementById('inputFreeCashflow').value) || null,
-    cashEquiv: parseFloat(document.getElementById('inputCashEquiv').value) || null,
+
+    // 5. 📊 【株価・指標・配当】
+    marketCap: parseFloat(document.getElementById('inputMarketCap').value) || null,
+    per: parseFloat(document.getElementById('inputPer').value) || null,
+    pbr: parseFloat(document.getElementById('inputPbr').value) || null,
+    roe: parseFloat(document.getElementById('inputRoe').value) || null,
+    opMargin: parseFloat(document.getElementById('inputOpMargin').value) || null,
+    ordinaryMargin: parseFloat(document.getElementById('inputOrdinaryMargin').value) || null,
+    dividendYield: parseFloat(document.getElementById('inputDividendYield').value) || null,
+    payoutRatio: parseFloat(document.getElementById('inputPayoutRatio').value) || null,
+    dividendCurrent: parseFloat(document.getElementById('inputDividendCurrent').value) || null,
+    dividendNext: parseFloat(document.getElementById('inputDividendNext').value) || null,
     consecDivYears: parseInt(document.getElementById('inputConsecDivYears').value) || null,
     doe: parseFloat(document.getElementById('inputDoe').value) || null,
     rndExpense: parseFloat(document.getElementById('inputRndExpense').value) || null,
     capex: parseFloat(document.getElementById('inputCapex').value) || null,
-    employees: parseInt(document.getElementById('inputEmployees').value) || null,
-    overseasRatio: parseFloat(document.getElementById('inputOverseasRatio').value) || null,
+
+    // 6. 💬 ユーザーメモ
     shikihoComment: document.getElementById('inputShikihoComment').value.trim()
   };
 
@@ -1255,41 +1261,53 @@ function parseJsonInput() {
 
 async function applyParsedJson(data) {
   const mapping = {
+    // 1. 🏢 銘柄基本情報
     code: 'inputCode',
     name: 'inputName',
+    industry: 'inputIndustry',
+    status: 'inputStatus',
+
+    // 2. 📝 【特色・連結事業】
+    shareholders: 'inputShareholders',
+    employees: 'inputEmployees',
+    overseasRatio: 'inputOverseasRatio',
+
+    // 3. 📰 【業績】
     businessArticle: 'inputBusinessArticle',
     materialArticle: 'inputMaterialArticle',
-    shareholders: 'inputShareholders',
-    equityRatio: 'inputEquityRatio',
-    retainedEarnings: 'inputRetainedEarnings',
-    interestBearingDebt: 'inputDebt',
-    roe: 'inputRoe',
-    dividendYield: 'inputDividendYield',
-    payoutRatio: 'inputPayoutRatio',
-    dividendCurrent: 'inputDividendCurrent',
-    dividendNext: 'inputDividendNext',
-    per: 'inputPer',
-    pbr: 'inputPbr',
-    marketCap: 'inputMarketCap',
-    shikihoComment: 'inputShikihoComment',
-    // 新規フィールド
-    opMargin: 'inputOpMargin',
-    ordinaryMargin: 'inputOrdinaryMargin',
     eps: 'inputEps',
     bps: 'inputBps',
     revenueGrowth: 'inputRevenueGrowth',
     opProfitGrowth: 'inputOpProfitGrowth',
     epsGrowth: 'inputEpsGrowth',
+
+    // 4. 💰 【財務・キャッシュフロー】
+    equityRatio: 'inputEquityRatio',
+    retainedEarnings: 'inputRetainedEarnings',
+    interestBearingDebt: 'inputDebt',
+    cashEquiv: 'inputCashEquiv',
     opCashflow: 'inputOpCashflow',
     invCashflow: 'inputInvCashflow',
     freeCashflow: 'inputFreeCashflow',
-    cashEquiv: 'inputCashEquiv',
+
+    // 5. 📊 【株価・指標・配当】
+    marketCap: 'inputMarketCap',
+    per: 'inputPer',
+    pbr: 'inputPbr',
+    roe: 'inputRoe',
+    opMargin: 'inputOpMargin',
+    ordinaryMargin: 'inputOrdinaryMargin',
+    dividendYield: 'inputDividendYield',
+    payoutRatio: 'inputPayoutRatio',
+    dividendCurrent: 'inputDividendCurrent',
+    dividendNext: 'inputDividendNext',
     consecDivYears: 'inputConsecDivYears',
     doe: 'inputDoe',
     rndExpense: 'inputRndExpense',
     capex: 'inputCapex',
-    employees: 'inputEmployees',
-    overseasRatio: 'inputOverseasRatio'
+
+    // 6. 💬 ユーザーメモ
+    shikihoComment: 'inputShikihoComment'
   };
 
   for (const [key, inputId] of Object.entries(mapping)) {
