@@ -9,6 +9,18 @@
 let supabaseClient = null; // window.supabase との競合を避けるため別名で定義
 let scoreSettingsMap = {}; // 配点マスタキャッシュ用
 
+const DEFAULT_SCORE_SETTINGS = {
+  '④': { item_name: '将来性・成長ストーリー①', dividend_base_score: 3, growth_base_score: 12 },
+  '⑤': { item_name: '将来性・成長ストーリー②', dividend_base_score: 3, growth_base_score: 12 },
+  '⑥': { item_name: '財務健全性', dividend_base_score: 20, growth_base_score: 10 },
+  '⑦': { item_name: '将来性・成長ストーリー③', dividend_base_score: 2, growth_base_score: 13 },
+  '⑧': { item_name: '配当・還元方針', dividend_base_score: 50, growth_base_score: 10 },
+  '⑨': { item_name: '稼ぐ力・収益性', dividend_base_score: 10, growth_base_score: 20 },
+  '⑩': { item_name: '将来性・成長ストーリー④', dividend_base_score: 2, growth_base_score: 13 },
+  '⑪': { item_name: '割安度・株価位置', dividend_base_score: 10, growth_base_score: 10 }
+};
+
+
 const STORAGE_KEY = 'shikiho_ai_data'; // Supabaseがオフラインの時の代替やデモ用
 const ISSUE_LABELS = {
   1: '1集 新春号',
@@ -72,7 +84,7 @@ function mapEvaluationToDb(item) {
     high_dividend_score: item.highDividendScore,
     growth_score: item.growthScore,
     ratings: item.ratings,
-    keywords: item.keywords,
+    keywords: item.keywords ? "'" + item.keywords : '',
     industry: item.industry,
     status: item.status,
     dividend_score: item.dividendScore,
@@ -103,6 +115,43 @@ function mapEvaluationToDb(item) {
 }
 
 function mapEvaluationFromDb(row) {
+  let ratings = {};
+  if (row.ratings) {
+    if (typeof row.ratings === 'string') {
+      try { ratings = JSON.parse(row.ratings); } catch(e) { ratings = {}; }
+    } else {
+      ratings = row.ratings;
+    }
+  }
+
+  const hdBase = calculateBaseScore(ratings, 'highDividend');
+  const grBase = calculateBaseScore(ratings, 'growth');
+
+  let hdScoreObj = { base: hdBase, bonus: 0, total: hdBase };
+  let grScoreObj = { base: grBase, bonus: 0, total: grBase };
+
+  try {
+    let rawHd = row.high_dividend_score;
+    if (rawHd) {
+      if (typeof rawHd === 'string') rawHd = JSON.parse(rawHd);
+      const bonus = (rawHd && rawHd.bonus != null) ? parseInt(rawHd.bonus) : 0;
+      hdScoreObj = { base: hdBase, bonus: bonus, total: hdBase + bonus };
+    }
+  } catch(e) {
+    console.warn('Failed to parse high_dividend_score', e);
+  }
+
+  try {
+    let rawGr = row.growth_score;
+    if (rawGr) {
+      if (typeof rawGr === 'string') rawGr = JSON.parse(rawGr);
+      const bonus = (rawGr && rawGr.bonus != null) ? parseInt(rawGr.bonus) : 0;
+      grScoreObj = { base: grBase, bonus: bonus, total: grBase + bonus };
+    }
+  } catch(e) {
+    console.warn('Failed to parse growth_score', e);
+  }
+
   return {
     id: row.id,
     issueYear: row.issue_year,
@@ -126,9 +175,9 @@ function mapEvaluationFromDb(row) {
     per: row.per != null ? parseFloat(row.per) : null,
     pbr: row.pbr != null ? parseFloat(row.pbr) : null,
     marketCap: row.market_cap != null ? parseFloat(row.market_cap) : null,
-    highDividendScore: row.high_dividend_score,
-    growthScore: row.growth_score,
-    ratings: row.ratings || {},
+    highDividendScore: hdScoreObj,
+    growthScore: grScoreObj,
+    ratings: ratings,
     keywords: row.keywords || '',
     industry: row.industry || '',
     status: row.status || '',
@@ -342,20 +391,24 @@ async function loadScoreSettings() {
       cache: 'no-store'
     });
     const json = await res.json();
-    if (json.success) {
-      scoreSettingsMap = {};
-      json.data.forEach(item => {
-        scoreSettingsMap[item.item_no] = {
-          item_name: item.item_name,
-          dividend_base_score: parseInt(item.dividend_base_score) || 0,
-          growth_base_score: parseInt(item.growth_base_score) || 0,
-          description: item.description || ''
-        };
-      });
-      console.log('✅ Score settings loaded:', scoreSettingsMap);
-    } else {
-      console.error('❌ Failed to load score settings from GAS:', json.error);
+    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      // Validate that returned data actually contains score settings
+      const firstItem = json.data[0];
+      if (firstItem && 'item_no' in firstItem) {
+        scoreSettingsMap = {};
+        json.data.forEach(item => {
+          scoreSettingsMap[item.item_no] = {
+            item_name: item.item_name,
+            dividend_base_score: parseInt(item.dividend_base_score) || 0,
+            growth_base_score: parseInt(item.growth_base_score) || 0,
+            description: item.description || ''
+          };
+        });
+        console.log('✅ Score settings loaded:', scoreSettingsMap);
+        return;
+      }
     }
+    console.warn('⚠️ Invalid or empty score settings from GAS, falling back to default settings.');
   } catch (e) {
     console.error('❌ Failed to load score settings:', e);
   }
@@ -392,11 +445,15 @@ async function lookupBrandDetail(code) {
 // Dynamic Scoring & Prompt Utilities
 // ============================================================
 function calculateBaseScore(ratings, scoreType) {
-  if (!ratings || !scoreSettingsMap || Object.keys(scoreSettingsMap).length === 0) {
-    return 100; // 初期値フォールバック
+  if (!ratings) {
+    return 100;
   }
+  const settings = (scoreSettingsMap && Object.keys(scoreSettingsMap).length > 0)
+    ? scoreSettingsMap
+    : DEFAULT_SCORE_SETTINGS;
+
   let totalBase = 0;
-  for (const [itemNo, setting] of Object.entries(scoreSettingsMap)) {
+  for (const [itemNo, setting] of Object.entries(settings)) {
     const ratingKey = ITEM_TO_RATING_KEY[itemNo];
     if (!ratingKey) continue;
     const rating = ratings[ratingKey] || '';
@@ -603,7 +660,7 @@ function renderStatusSelect(status) {
 }
 
 function renderKeywords(keywords) {
-  if (!keywords) return '<span style="color:var(--color-text-tertiary)">-</span>';
+  if (!keywords || typeof keywords !== 'string' || keywords.startsWith('#')) return '<span style="color:var(--color-text-tertiary)">-</span>';
   return keywords.split(/[,，]/).map(kw => {
     let trimKw = kw.trim();
     if (!trimKw) return '';
@@ -621,12 +678,25 @@ function renderKeywords(keywords) {
 
 function renderScoreCell(score) {
   if (!score) return '<span style="color:var(--color-text-tertiary)">-</span>';
-  const bonusClass = score.bonus > 0 ? 'positive' : score.bonus < 0 ? 'negative' : 'zero';
-  const bonusPrefix = score.bonus > 0 ? '+' : '';
+  const total = score.total != null ? score.total : 0;
+  const base = score.base != null ? score.base : 0;
+  const bonus = score.bonus != null ? score.bonus : 0;
+
+  if (bonus === 0) {
+    return `
+      <div class="score-cell">
+        <span class="score-total-large">${total}</span>
+        <span class="score-breakdown-inline">(${base})</span>
+      </div>
+    `;
+  }
+
+  const bonusClass = bonus > 0 ? 'positive' : 'negative';
+  const bonusPrefix = bonus > 0 ? '+' : '';
   return `
     <div class="score-cell">
-      <span class="score-total-large">${score.total}</span>
-      <span class="score-breakdown-inline">(${score.base}<span class="score-bonus-inline ${bonusClass}">${bonusPrefix}${score.bonus}</span>)</span>
+      <span class="score-total-large">${total}</span>
+      <span class="score-breakdown-inline">(${base}<span class="score-bonus-inline ${bonusClass}">${bonusPrefix}${bonus}</span>)</span>
     </div>
   `;
 }
@@ -754,7 +824,7 @@ function buildDetailHTML(item) {
   }
 
   // Keywords tags at top
-  if (item.keywords) {
+  if (item.keywords && typeof item.keywords === 'string' && !item.keywords.startsWith('#')) {
     html += `
       <div class="detail-section" style="margin-bottom: var(--spacing-sm);">
         <div style="display: flex; flex-wrap: wrap; gap: 4px;">
@@ -1038,7 +1108,7 @@ function populateForm(item) {
   
   let posKws = [];
   let negKws = [];
-  if (item.keywords) {
+  if (item.keywords && typeof item.keywords === 'string' && !item.keywords.startsWith('#')) {
     item.keywords.split(/[,，]/).forEach(kw => {
       const trimKw = kw.trim();
       if (!trimKw) return;
@@ -1399,7 +1469,7 @@ async function applyParsedJson(data) {
     }
   }
 
-  if (data.keywords) {
+  if (data.keywords && typeof data.keywords === 'string' && !data.keywords.startsWith('#')) {
     const kws = Array.isArray(data.keywords) ? data.keywords : String(data.keywords).split(/[,，]/);
     let posKws = [];
     let negKws = [];
