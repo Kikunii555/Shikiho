@@ -54,6 +54,7 @@ create table if not exists shikiho_evaluations (
   keywords text,
   industry varchar(100),
   status varchar(50),
+  market varchar(50),
   dividend_score integer,
   financial_score integer,
   earning_score integer,
@@ -63,6 +64,9 @@ create table if not exists shikiho_evaluations (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- 既存テーブルの移行用 (もしテーブルが既に存在する場合に実行してください)
+-- alter table shikiho_evaluations add column if not exists market varchar(50);
 
 -- RLS (Row Level Security) の設定
 -- 今回は個人用の簡易ツールのため、RLSを無効化します（必要に応じてセキュリティ設定を行ってください）

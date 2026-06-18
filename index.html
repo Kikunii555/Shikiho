@@ -165,6 +165,17 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">市場名</label>
+            <select class="form-input" id="inputMarket">
+              <option value="">- 未設定 -</option>
+              <option value="東証P">東証P</option>
+              <option value="東証S">東証S</option>
+              <option value="東証G">東証G</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">ステータス（保有状況・注目度）</label>
             <select class="form-input" id="inputStatus">
               <option value="">- 未設定 -</option>
@@ -375,6 +386,7 @@
           <span class="detail-name" id="detailName"></span>
         </div>
         <span class="detail-industry-badge" id="detailIndustry"></span>
+        <span class="detail-market-badge" id="detailMarket"></span>
         <button class="modal-close" id="detailClose">✕</button>
       </div>
       <div class="detail-content" id="detailContent">

@@ -86,6 +86,7 @@ function mapEvaluationToDb(item) {
     ratings: item.ratings,
     keywords: item.keywords ? (String(item.keywords).startsWith("'") ? item.keywords : "'" + item.keywords) : '',
     industry: item.industry,
+    market: item.market,
     status: item.status,
     dividend_score: item.dividendScore,
     financial_score: item.financialScore,
@@ -180,6 +181,7 @@ function mapEvaluationFromDb(row) {
     ratings: ratings,
     keywords: row.keywords || '',
     industry: row.industry || '',
+    market: row.market || '',
     status: row.status || '',
     dividendScore: row.dividend_score != null ? parseInt(row.dividend_score) : null,
     financialScore: row.financial_score != null ? parseInt(row.financial_score) : null,
@@ -306,6 +308,7 @@ const DataStore = {
         ratings: 'ratings',
         keywords: 'keywords',
         industry: 'industry',
+        market: 'market',
         status: 'status',
         dividendScore: 'dividend_score',
         financialScore: 'financial_score',
@@ -510,6 +513,15 @@ async function generateAiCriteriaPrompt() {
 // ============================================================
 // Utility Functions
 // ============================================================
+function normalizeMarketValue(val) {
+  if (!val) return '';
+  const s = String(val).trim();
+  if (s === '東証P' || s === '東P' || s === '東証一部' || s === 'プライム' || s.toLowerCase().includes('東p') || s.toLowerCase().includes('東証p') || s.toLowerCase().includes('prime') || s.toLowerCase() === 'p') return '東証P';
+  if (s === '東証S' || s === '東S' || s === '東証二部' || s === 'スタンダード' || s.toLowerCase().includes('東s') || s.toLowerCase().includes('東証s') || s.toLowerCase().includes('standard') || s.toLowerCase() === 's') return '東証S';
+  if (s === '東証G' || s === '東G' || s === 'マザーズ' || s === 'グロース' || s.toLowerCase().includes('東g') || s.toLowerCase().includes('東証g') || s.toLowerCase().includes('growth') || s.toLowerCase() === 'g') return '東証G';
+  return 'その他';
+}
+
 function getIssueKey(year, number) {
   return `${year}-${number}`;
 }
@@ -801,6 +813,15 @@ async function showDetail(id) {
   } else {
     indEl.textContent = '';
     indEl.style.display = 'none';
+  }
+
+  const marketEl = document.getElementById('detailMarket');
+  if (item.market) {
+    marketEl.textContent = item.market;
+    marketEl.style.display = '';
+  } else {
+    marketEl.textContent = '';
+    marketEl.style.display = 'none';
   }
 
   const content = document.getElementById('detailContent');
@@ -1170,11 +1191,16 @@ function populateForm(item) {
   }
   document.getElementById('inputName').value = item.name || '';
   document.getElementById('inputIndustry').value = item.industry || '';
+  document.getElementById('inputMarket').value = normalizeMarketValue(item.market);
   if (!item.industry && item.code) {
     lookupBrandDetail(item.code).then(detail => {
       const el = document.getElementById('inputIndustry');
       if (detail && detail.industry && !el.value) {
         el.value = detail.industry;
+      }
+      const marketEl = document.getElementById('inputMarket');
+      if (detail && detail.market && !marketEl.value) {
+        marketEl.value = normalizeMarketValue(detail.market);
       }
     });
   }
@@ -1356,6 +1382,7 @@ function collectFormData() {
     code: document.getElementById('inputCode').value.trim(),
     name: document.getElementById('inputName').value.trim(),
     industry: document.getElementById('inputIndustry').value.trim(),
+    market: document.getElementById('inputMarket').value.trim(),
     status: document.getElementById('inputStatus').value,
     keywords: (() => {
       const posText = document.getElementById('inputPositiveKeywords').value.trim();
@@ -1492,6 +1519,7 @@ async function applyParsedJson(data) {
     code: 'inputCode',
     name: 'inputName',
     industry: 'inputIndustry',
+    market: 'inputMarket',
     status: 'inputStatus',
 
     // 2. 📝 【特色・連結事業】
@@ -1573,6 +1601,9 @@ async function applyParsedJson(data) {
 
   if (data.industry) {
     document.getElementById('inputIndustry').value = data.industry;
+  }
+  if (data.market) {
+    document.getElementById('inputMarket').value = normalizeMarketValue(data.market);
   }
   if (data.status) {
     document.getElementById('inputStatus').value = data.status;
