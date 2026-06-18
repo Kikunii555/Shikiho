@@ -61,12 +61,46 @@ create table if not exists shikiho_evaluations (
   future_score integer,
   valuation_score integer,
   shikiho_comment text,
+  op_margin numeric,
+  ordinary_margin numeric,
+  eps numeric,
+  bps numeric,
+  revenue_growth numeric,
+  op_profit_growth numeric,
+  eps_growth numeric,
+  op_cashflow numeric,
+  inv_cashflow numeric,
+  free_cashflow numeric,
+  cash_equiv numeric,
+  consec_div_years integer,
+  doe numeric,
+  rnd_expense numeric,
+  capex numeric,
+  employees integer,
+  overseas_ratio numeric,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- 既存テーブルの移行用 (もしテーブルが既に存在する場合に実行してください)
 -- alter table shikiho_evaluations add column if not exists market varchar(50);
+-- alter table shikiho_evaluations add column if not exists op_margin numeric;
+-- alter table shikiho_evaluations add column if not exists ordinary_margin numeric;
+-- alter table shikiho_evaluations add column if not exists eps numeric;
+-- alter table shikiho_evaluations add column if not exists bps numeric;
+-- alter table shikiho_evaluations add column if not exists revenue_growth numeric;
+-- alter table shikiho_evaluations add column if not exists op_profit_growth numeric;
+-- alter table shikiho_evaluations add column if not exists eps_growth numeric;
+-- alter table shikiho_evaluations add column if not exists op_cashflow numeric;
+-- alter table shikiho_evaluations add column if not exists inv_cashflow numeric;
+-- alter table shikiho_evaluations add column if not exists free_cashflow numeric;
+-- alter table shikiho_evaluations add column if not exists cash_equiv numeric;
+-- alter table shikiho_evaluations add column if not exists consec_div_years integer;
+-- alter table shikiho_evaluations add column if not exists doe numeric;
+-- alter table shikiho_evaluations add column if not exists rnd_expense numeric;
+-- alter table shikiho_evaluations add column if not exists capex numeric;
+-- alter table shikiho_evaluations add column if not exists employees integer;
+-- alter table shikiho_evaluations add column if not exists overseas_ratio numeric;
 
 -- RLS (Row Level Security) の設定
 -- 今回は個人用の簡易ツールのため、RLSを無効化します（必要に応じてセキュリティ設定を行ってください）
