@@ -1866,8 +1866,9 @@ function initEvents() {
   });
   document.getElementById('btnDetailEdit').addEventListener('click', () => {
     if (AppState.selectedId) {
+      const id = AppState.selectedId;
       hideDetail();
-      openRegisterModal(AppState.selectedId);
+      openRegisterModal(id);
     }
   });
   document.getElementById('btnDetailDelete').addEventListener('click', () => {
