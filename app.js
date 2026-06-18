@@ -115,6 +115,18 @@ function mapEvaluationToDb(item) {
   };
 }
 
+function safeParseFloat(val) {
+  if (val == null || val === '') return null;
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? null : parsed;
+}
+
+function safeParseInt(val) {
+  if (val == null || val === '') return null;
+  const parsed = parseInt(val);
+  return isNaN(parsed) ? null : parsed;
+}
+
 function mapEvaluationFromDb(row) {
   let ratings = {};
   if (row.ratings) {
@@ -135,8 +147,8 @@ function mapEvaluationFromDb(row) {
     let rawHd = row.high_dividend_score;
     if (rawHd) {
       if (typeof rawHd === 'string') rawHd = JSON.parse(rawHd);
-      const bonus = (rawHd && rawHd.bonus != null) ? parseInt(rawHd.bonus) : 0;
-      hdScoreObj = { base: hdBase, bonus: bonus, total: hdBase + bonus };
+      const bonus = (rawHd && rawHd.bonus != null) ? safeParseInt(rawHd.bonus) : 0;
+      hdScoreObj = { base: hdBase, bonus: bonus || 0, total: hdBase + (bonus || 0) };
     }
   } catch(e) {
     console.warn('Failed to parse high_dividend_score', e);
@@ -146,8 +158,8 @@ function mapEvaluationFromDb(row) {
     let rawGr = row.growth_score;
     if (rawGr) {
       if (typeof rawGr === 'string') rawGr = JSON.parse(rawGr);
-      const bonus = (rawGr && rawGr.bonus != null) ? parseInt(rawGr.bonus) : 0;
-      grScoreObj = { base: grBase, bonus: bonus, total: grBase + bonus };
+      const bonus = (rawGr && rawGr.bonus != null) ? safeParseInt(rawGr.bonus) : 0;
+      grScoreObj = { base: grBase, bonus: bonus || 0, total: grBase + (bonus || 0) };
     }
   } catch(e) {
     console.warn('Failed to parse growth_score', e);
@@ -164,18 +176,18 @@ function mapEvaluationFromDb(row) {
     businessArticle: row.business_article,
     materialArticle: row.material_article,
     shareholders: row.shareholders,
-    equityRatio: row.equity_ratio != null ? parseFloat(row.equity_ratio) : null,
-    retainedEarnings: row.retained_earnings != null ? parseFloat(row.retained_earnings) : null,
-    interestBearingDebt: row.interest_bearing_debt != null ? parseFloat(row.interest_bearing_debt) : null,
-    roe: row.roe != null ? parseFloat(row.roe) : null,
-    dividendCurrent: row.dividend_current != null ? parseFloat(row.dividend_current) : null,
-    dividendNext: row.dividend_next != null ? parseFloat(row.dividend_next) : null,
-    dividendYield: row.dividend_yield != null ? parseFloat(row.dividend_yield) : null,
-    payoutRatio: row.payout_ratio != null ? parseFloat(row.payout_ratio) : null,
+    equityRatio: safeParseFloat(row.equity_ratio),
+    retainedEarnings: safeParseFloat(row.retained_earnings),
+    interestBearingDebt: safeParseFloat(row.interest_bearing_debt),
+    roe: safeParseFloat(row.roe),
+    dividendCurrent: safeParseFloat(row.dividend_current),
+    dividendNext: safeParseFloat(row.dividend_next),
+    dividendYield: safeParseFloat(row.dividend_yield),
+    payoutRatio: safeParseFloat(row.payout_ratio),
     earnings: row.earnings || [],
-    per: row.per != null ? parseFloat(row.per) : null,
-    pbr: row.pbr != null ? parseFloat(row.pbr) : null,
-    marketCap: row.market_cap != null ? parseFloat(row.market_cap) : null,
+    per: safeParseFloat(row.per),
+    pbr: safeParseFloat(row.pbr),
+    marketCap: safeParseFloat(row.market_cap),
     highDividendScore: hdScoreObj,
     growthScore: grScoreObj,
     ratings: ratings,
@@ -183,29 +195,29 @@ function mapEvaluationFromDb(row) {
     industry: row.industry || '',
     market: row.market || '',
     status: row.status || '',
-    dividendScore: row.dividend_score != null ? parseInt(row.dividend_score) : null,
-    financialScore: row.financial_score != null ? parseInt(row.financial_score) : null,
-    earningScore: row.earning_score != null ? parseInt(row.earning_score) : null,
-    futureScore: row.future_score != null ? parseInt(row.future_score) : null,
-    valuationScore: row.valuation_score != null ? parseInt(row.valuation_score) : null,
+    dividendScore: safeParseInt(row.dividend_score),
+    financialScore: safeParseInt(row.financial_score),
+    earningScore: safeParseInt(row.earning_score),
+    futureScore: safeParseInt(row.future_score),
+    valuationScore: safeParseInt(row.valuation_score),
     shikihoComment: row.shikiho_comment || '',
-    opMargin: row.op_margin != null ? parseFloat(row.op_margin) : null,
-    ordinaryMargin: row.ordinary_margin != null ? parseFloat(row.ordinary_margin) : null,
-    eps: row.eps != null ? parseFloat(row.eps) : null,
-    bps: row.bps != null ? parseFloat(row.bps) : null,
-    revenueGrowth: row.revenue_growth != null ? parseFloat(row.revenue_growth) : null,
-    opProfitGrowth: row.op_profit_growth != null ? parseFloat(row.op_profit_growth) : null,
-    epsGrowth: row.eps_growth != null ? parseFloat(row.eps_growth) : null,
-    opCashflow: row.op_cashflow != null ? parseFloat(row.op_cashflow) : null,
-    invCashflow: row.inv_cashflow != null ? parseFloat(row.inv_cashflow) : null,
-    freeCashflow: row.free_cashflow != null ? parseFloat(row.free_cashflow) : null,
-    cashEquiv: row.cash_equiv != null ? parseFloat(row.cash_equiv) : null,
-    consecDivYears: row.consec_div_years != null ? parseInt(row.consec_div_years) : null,
-    doe: row.doe != null ? parseFloat(row.doe) : null,
-    rndExpense: row.rnd_expense != null ? parseFloat(row.rnd_expense) : null,
-    capex: row.capex != null ? parseFloat(row.capex) : null,
-    employees: row.employees != null ? parseInt(row.employees) : null,
-    overseasRatio: row.overseas_ratio != null ? parseFloat(row.overseas_ratio) : null,
+    opMargin: safeParseFloat(row.op_margin),
+    ordinaryMargin: safeParseFloat(row.ordinary_margin),
+    eps: safeParseFloat(row.eps),
+    bps: safeParseFloat(row.bps),
+    revenueGrowth: safeParseFloat(row.revenue_growth),
+    opProfitGrowth: safeParseFloat(row.op_profit_growth),
+    epsGrowth: safeParseFloat(row.eps_growth),
+    opCashflow: safeParseFloat(row.op_cashflow),
+    invCashflow: safeParseFloat(row.inv_cashflow),
+    freeCashflow: safeParseFloat(row.free_cashflow),
+    cashEquiv: safeParseFloat(row.cash_equiv),
+    consecDivYears: safeParseInt(row.consec_div_years),
+    doe: safeParseFloat(row.doe),
+    rndExpense: safeParseFloat(row.rnd_expense),
+    capex: safeParseFloat(row.capex),
+    employees: safeParseInt(row.employees),
+    overseasRatio: safeParseFloat(row.overseas_ratio),
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -850,28 +862,43 @@ function buildDetailHTML(item) {
     `;
   }
 
-  // Keywords tags at top
+  // Keywords tags at top (divided into positive & negative lines)
   if (item.keywords && typeof item.keywords === 'string' && !item.keywords.startsWith('#')) {
+    const kws = item.keywords.split(/[,，]/).map(k => k.trim()).filter(Boolean);
+    const posKws = [];
+    const negKws = [];
+    
+    kws.forEach(kw => {
+      if (kw.startsWith('+')) {
+        posKws.push(kw.substring(1));
+      } else if (kw.startsWith('-')) {
+        negKws.push(kw.substring(1));
+      } else {
+        posKws.push(kw); // デフォルトはポジティブ扱い
+      }
+    });
+
     html += `
-      <div class="detail-section" style="margin-bottom: var(--spacing-sm);">
-        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-          ${item.keywords.split(/[,，]/).map(kw => {
-            let trimKw = kw.trim();
-            if (!trimKw) return '';
-            let tagClass = 'keyword-tag';
-            let prefix = '# ';
-            if (trimKw.startsWith('+')) {
-              tagClass = 'keyword-tag-positive';
-              prefix = '👍 ';
-              trimKw = trimKw.substring(1);
-            } else if (trimKw.startsWith('-')) {
-              tagClass = 'keyword-tag-negative';
-              prefix = '👎 ';
-              trimKw = trimKw.substring(1);
-            }
-            return `<span class="${tagClass}" style="font-size:0.75rem; padding:3px 10px; margin: 0 4px 4px 0;">${prefix}${escapeHtml(trimKw)}</span>`;
-          }).join('')}
+      <div class="detail-section" style="margin-bottom: var(--spacing-sm); display: flex; flex-direction: column; gap: 8px;">
+    `;
+
+    if (posKws.length > 0) {
+      html += `
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+          ${posKws.map(kw => `<span class="keyword-tag-positive" style="font-size:0.75rem; padding:3px 10px; margin: 0 4px 4px 0;">👍 ${escapeHtml(kw)}</span>`).join('')}
         </div>
+      `;
+    }
+
+    if (negKws.length > 0) {
+      html += `
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+          ${negKws.map(kw => `<span class="keyword-tag-negative" style="font-size:0.75rem; padding:3px 10px; margin: 0 4px 4px 0;">👎 ${escapeHtml(kw)}</span>`).join('')}
+        </div>
+      `;
+    }
+
+    html += `
       </div>
     `;
   }
@@ -1058,7 +1085,6 @@ function buildRatingItem(label, rating, score) {
     <div class="rating-item">
       <div class="rating-item-label">${label}</div>
       ${rating ? `<span class="rating-badge rating-${rating}">${rating}</span>` : '<span style="color:var(--color-text-muted)">-</span>'}
-      ${score != null ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); margin-top:4px;">Score: ${score} pts</div>` : ''}
     </div>
   `;
 }
