@@ -1327,19 +1327,73 @@ function ratingFromScore(score) {
   return 'E';
 }
 
-// 配当力: 配当利回り・連続増配年数・配当性向・DOE
+// 配当力: 配当利回りによるベース点（最大60点）＋増配据置加点（最大40点）＋一発アウト判定
 function calcDividendPowerRating(d) {
-  let score = 0, count = 0;
-  if (d.dividendYield != null) { count++; score += d.dividendYield >= 4 ? 100 : d.dividendYield >= 3 ? 80 : d.dividendYield >= 2 ? 60 : d.dividendYield >= 1 ? 40 : 20; }
-  if (d.consecDivYears != null) { count++; score += d.consecDivYears >= 20 ? 100 : d.consecDivYears >= 10 ? 80 : d.consecDivYears >= 5 ? 60 : d.consecDivYears >= 1 ? 40 : 20; }
-  if (d.payoutRatio != null) { count++; score += (d.payoutRatio > 0 && d.payoutRatio <= 40) ? 100 : d.payoutRatio <= 60 ? 80 : d.payoutRatio <= 80 ? 50 : 20; }
-  if (d.doe != null) { count++; score += d.doe >= 5 ? 100 : d.doe >= 3 ? 80 : d.doe >= 1.5 ? 60 : 30; }
-  if (d.dividendNext != null && d.dividendCurrent != null && d.dividendCurrent > 0) {
-    count++;
-    const divGrowth = ((d.dividendNext - d.dividendCurrent) / d.dividendCurrent) * 100;
-    score += divGrowth > 10 ? 100 : divGrowth > 0 ? 80 : divGrowth === 0 ? 50 : 20;
+  if (d.dividendYield == null) {
+    return null;
   }
-  return count > 0 ? ratingFromScore(score / count) : null;
+
+  // 1. ベース点 (利回りベース、最大60点)
+  let baseScore = 0;
+  if (d.dividendYield >= 4.0) {
+    baseScore = 60;
+  } else if (d.dividendYield >= 3.0) {
+    baseScore = 48;
+  } else if (d.dividendYield >= 2.5) {
+    baseScore = 36;
+  } else if (d.dividendYield >= 2.0) {
+    baseScore = 24;
+  } else {
+    baseScore = 12;
+  }
+
+  // 2. 加点ルール (来期予想、最大40点)
+  let addScore = 0;
+  let hasGrowthData = false;
+  let divGrowth = 0;
+  if (d.dividendNext != null && d.dividendCurrent != null && d.dividendCurrent > 0) {
+    hasGrowthData = true;
+    divGrowth = ((d.dividendNext - d.dividendCurrent) / d.dividendCurrent) * 100;
+    
+    if (divGrowth >= 10.0) {
+      addScore = 40;
+    } else if (divGrowth >= 5.0) {
+      addScore = 32;
+    } else if (divGrowth >= 1.0) {
+      addScore = 24;
+    } else if (divGrowth === 0.0) {
+      addScore = 16;
+    }
+  }
+
+  let totalScore = baseScore + addScore;
+
+  // 3. 一発アウト判定 (強制的に合計0点)
+  // - 「無配」「減配」の記載がある（記事テキスト）
+  // - または、来期予想が今期を下回る（減配予想）
+  let isOut = false;
+  
+  // 記事テキストチェック
+  const checkText = (d.businessArticle || '') + ' ' + (d.materialArticle || '') + ' ' + (d.shikihoComment || '');
+  if (checkText.includes('無配') || checkText.includes('減配')) {
+    isOut = true;
+  }
+  
+  // 数値上の減配予想
+  if (hasGrowthData && divGrowth < 0) {
+    isOut = true;
+  }
+  
+  // 来期が今期より少ない
+  if (d.dividendNext != null && d.dividendCurrent != null && d.dividendNext < d.dividendCurrent) {
+    isOut = true;
+  }
+
+  if (isOut) {
+    totalScore = 0;
+  }
+
+  return ratingFromScore(totalScore);
 }
 
 // 財務安全性: 自己資本比率・有利子負債/利益剰余金比率・現金等
