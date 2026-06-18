@@ -128,44 +128,8 @@ function safeParseInt(val) {
 }
 
 function mapEvaluationFromDb(row) {
-  let ratings = {};
-  if (row.ratings) {
-    if (typeof row.ratings === 'string') {
-      try { ratings = JSON.parse(row.ratings); } catch(e) { ratings = {}; }
-    } else {
-      ratings = row.ratings;
-    }
-  }
-
-  const hdBase = calculateBaseScore(ratings, 'highDividend');
-  const grBase = calculateBaseScore(ratings, 'growth');
-
-  let hdScoreObj = { base: hdBase, bonus: 0, total: hdBase };
-  let grScoreObj = { base: grBase, bonus: 0, total: grBase };
-
-  try {
-    let rawHd = row.high_dividend_score;
-    if (rawHd) {
-      if (typeof rawHd === 'string') rawHd = JSON.parse(rawHd);
-      const bonus = (rawHd && rawHd.bonus != null) ? safeParseInt(rawHd.bonus) : 0;
-      hdScoreObj = { base: hdBase, bonus: bonus || 0, total: hdBase + (bonus || 0) };
-    }
-  } catch(e) {
-    console.warn('Failed to parse high_dividend_score', e);
-  }
-
-  try {
-    let rawGr = row.growth_score;
-    if (rawGr) {
-      if (typeof rawGr === 'string') rawGr = JSON.parse(rawGr);
-      const bonus = (rawGr && rawGr.bonus != null) ? safeParseInt(rawGr.bonus) : 0;
-      grScoreObj = { base: grBase, bonus: bonus || 0, total: grBase + (bonus || 0) };
-    }
-  } catch(e) {
-    console.warn('Failed to parse growth_score', e);
-  }
-
-  return {
+  // まず基本データをオブジェクトとして構築します
+  const item = {
     id: row.id,
     issueYear: row.issue_year,
     issueNumber: row.issue_number,
@@ -188,9 +152,6 @@ function mapEvaluationFromDb(row) {
     per: safeParseFloat(row.per),
     pbr: safeParseFloat(row.pbr),
     marketCap: safeParseFloat(row.market_cap),
-    highDividendScore: hdScoreObj,
-    growthScore: grScoreObj,
-    ratings: ratings,
     keywords: row.keywords || '',
     industry: row.industry || '',
     market: row.market || '',
@@ -221,6 +182,35 @@ function mapEvaluationFromDb(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+
+  // 1. 読み込んだ生データから、常に最新のルールで5大評価を自動計算して反映します
+  item.ratings = autoCalculateRatings(item);
+
+  // 2. 高配当/成長株のベーススコアも再計算
+  const hdBase = calculateBaseScore(item.ratings, 'highDividend');
+  const grBase = calculateBaseScore(item.ratings, 'growth');
+
+  let hdBonus = 0;
+  try {
+    let rawHd = row.high_dividend_score;
+    if (rawHd) {
+      if (typeof rawHd === 'string') rawHd = JSON.parse(rawHd);
+      hdBonus = (rawHd && rawHd.bonus != null) ? safeParseInt(rawHd.bonus) : 0;
+    }
+  } catch(e) {}
+  item.highDividendScore = { base: hdBase, bonus: hdBonus || 0, total: hdBase + (hdBonus || 0) };
+
+  let grBonus = 0;
+  try {
+    let rawGr = row.growth_score;
+    if (rawGr) {
+      if (typeof rawGr === 'string') rawGr = JSON.parse(rawGr);
+      grBonus = (rawGr && rawGr.bonus != null) ? safeParseInt(rawGr.bonus) : 0;
+    }
+  } catch(e) {}
+  item.growthScore = { base: grBase, bonus: grBonus || 0, total: grBase + (grBonus || 0) };
+
+  return item;
 }
 
 // ============================================================
