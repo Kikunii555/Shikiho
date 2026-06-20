@@ -57,60 +57,100 @@ const AppState = {
 // ============================================================
 // Supabase Mapping Utilities
 // ============================================================
+function safeNumVal(val) {
+  if (val === null || val === undefined || val === '') return null;
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? null : parsed;
+}
+
 function mapEvaluationToDb(item) {
+  const issueYear = item.issueYear !== undefined ? item.issueYear : item.issue_year;
+  const issueNumber = item.issueNumber !== undefined ? item.issueNumber : item.issue_number;
+  const issueLabel = item.issueLabel !== undefined ? item.issueLabel : item.issue_label;
+  const issueKey = item.issueKey !== undefined ? item.issueKey : item.issue_key;
+  const businessArticle = item.businessArticle !== undefined ? item.businessArticle : item.business_article;
+  const materialArticle = item.materialArticle !== undefined ? item.materialArticle : item.material_article;
+  const equityRatio = item.equityRatio !== undefined ? item.equityRatio : item.equity_ratio;
+  const retainedEarnings = item.retainedEarnings !== undefined ? item.retainedEarnings : item.retained_earnings;
+  const interestBearingDebt = item.interestBearingDebt !== undefined ? item.interestBearingDebt : item.interest_bearing_debt;
+  const dividendCurrent = item.dividendCurrent !== undefined ? item.dividendCurrent : item.dividend_current;
+  const dividendNext = item.dividendNext !== undefined ? item.dividendNext : item.dividend_next;
+  const dividendYield = item.dividendYield !== undefined ? item.dividendYield : item.dividend_yield;
+  const payoutRatio = item.payoutRatio !== undefined ? item.payoutRatio : item.payout_ratio;
+  const highDividendScore = item.highDividendScore !== undefined ? item.highDividendScore : item.high_dividend_score;
+  const growthScore = item.growthScore !== undefined ? item.growthScore : item.growth_score;
+  const dividendScore = item.dividendScore !== undefined ? item.dividendScore : item.dividend_score;
+  const financialScore = item.financialScore !== undefined ? item.financialScore : item.financial_score;
+  const earningScore = item.earningScore !== undefined ? item.earningScore : item.earning_score;
+  const futureScore = item.futureScore !== undefined ? item.futureScore : item.future_score;
+  const valuationScore = item.valuationScore !== undefined ? item.valuationScore : item.valuation_score;
+  const shikihoComment = item.shikihoComment !== undefined ? item.shikihoComment : item.shikiho_comment;
+  const opMargin = item.opMargin !== undefined ? item.opMargin : item.op_margin;
+  const ordinaryMargin = item.ordinaryMargin !== undefined ? item.ordinaryMargin : item.ordinary_margin;
+  const revenueGrowth = item.revenueGrowth !== undefined ? item.revenueGrowth : item.revenue_growth;
+  const opProfitGrowth = item.opProfitGrowth !== undefined ? item.opProfitGrowth : item.op_profit_growth;
+  const epsGrowth = item.epsGrowth !== undefined ? item.epsGrowth : item.eps_growth;
+  const opCashflow = item.opCashflow !== undefined ? item.opCashflow : item.op_cashflow;
+  const invCashflow = item.invCashflow !== undefined ? item.invCashflow : item.inv_cashflow;
+  const freeCashflow = item.freeCashflow !== undefined ? item.freeCashflow : item.free_cashflow;
+  const cashEquiv = item.cashEquiv !== undefined ? item.cashEquiv : item.cash_equiv;
+  const consecDivYears = item.consecDivYears !== undefined ? item.consecDivYears : item.consec_div_years;
+  const rndExpense = item.rndExpense !== undefined ? item.rndExpense : item.rnd_expense;
+  const overseasRatio = item.overseasRatio !== undefined ? item.overseasRatio : item.overseas_ratio;
+
   return {
     id: item.id || undefined,
-    issue_year: item.issueYear,
-    issue_number: item.issueNumber,
-    issue_label: item.issueLabel ? (String(item.issueLabel).startsWith("'") ? item.issueLabel : "'" + item.issueLabel) : '',
-    issue_key: item.issueKey ? (String(item.issueKey).startsWith("'") ? item.issueKey : "'" + item.issueKey) : '',
+    issue_year: safeNumVal(issueYear),
+    issue_number: safeNumVal(issueNumber),
+    issue_label: issueLabel ? (String(issueLabel).startsWith("'") ? issueLabel : "'" + issueLabel) : '',
+    issue_key: issueKey ? (String(issueKey).startsWith("'") ? issueKey : "'" + issueKey) : '',
     code: item.code,
     name: item.name,
-    business_article: item.businessArticle,
-    material_article: item.materialArticle,
+    business_article: businessArticle,
+    material_article: materialArticle,
     shareholders: item.shareholders,
-    equity_ratio: item.equityRatio,
-    retained_earnings: item.retainedEarnings,
-    interest_bearing_debt: item.interestBearingDebt,
-    roe: item.roe,
-    dividend_current: item.dividendCurrent,
-    dividend_next: item.dividendNext,
-    dividend_yield: item.dividendYield,
-    payout_ratio: item.payoutRatio,
+    equity_ratio: safeNumVal(equityRatio),
+    retained_earnings: safeNumVal(retainedEarnings),
+    interest_bearing_debt: safeNumVal(interestBearingDebt),
+    roe: safeNumVal(item.roe),
+    dividend_current: safeNumVal(dividendCurrent),
+    dividend_next: safeNumVal(dividendNext),
+    dividend_yield: safeNumVal(dividendYield),
+    payout_ratio: safeNumVal(payoutRatio),
     earnings: item.earnings,
-    per: item.per,
-    pbr: item.pbr,
-    market_cap: item.marketCap,
-    high_dividend_score: item.highDividendScore,
-    growth_score: item.growthScore,
+    per: safeNumVal(item.per),
+    pbr: safeNumVal(item.pbr),
+    market_cap: safeNumVal(item.marketCap),
+    high_dividend_score: highDividendScore,
+    growth_score: growthScore,
     ratings: item.ratings,
     keywords: item.keywords ? (String(item.keywords).startsWith("'") ? item.keywords : "'" + item.keywords) : '',
     industry: item.industry,
     market: item.market,
     status: item.status,
-    dividend_score: item.dividendScore,
-    financial_score: item.financialScore,
-    earning_score: item.earningScore,
-    future_score: item.futureScore,
-    valuation_score: item.valuationScore,
-    shikiho_comment: item.shikihoComment,
-    op_margin: item.opMargin,
-    ordinary_margin: item.ordinaryMargin,
-    eps: item.eps,
-    bps: item.bps,
-    revenue_growth: item.revenueGrowth,
-    op_profit_growth: item.opProfitGrowth,
-    eps_growth: item.epsGrowth,
-    op_cashflow: item.opCashflow,
-    inv_cashflow: item.invCashflow,
-    free_cashflow: item.freeCashflow,
-    cash_equiv: item.cashEquiv,
-    consec_div_years: item.consecDivYears,
-    doe: item.doe,
-    rnd_expense: item.rndExpense,
-    capex: item.capex,
-    employees: item.employees,
-    overseas_ratio: item.overseasRatio,
+    dividend_score: safeNumVal(dividendScore),
+    financial_score: safeNumVal(financialScore),
+    earning_score: safeNumVal(earningScore),
+    future_score: safeNumVal(futureScore),
+    valuation_score: safeNumVal(valuationScore),
+    shikiho_comment: shikihoComment,
+    op_margin: safeNumVal(opMargin),
+    ordinary_margin: safeNumVal(ordinaryMargin),
+    eps: safeNumVal(item.eps),
+    bps: safeNumVal(item.bps),
+    revenue_growth: safeNumVal(revenueGrowth),
+    op_profit_growth: safeNumVal(opProfitGrowth),
+    eps_growth: safeNumVal(epsGrowth),
+    op_cashflow: safeNumVal(opCashflow),
+    inv_cashflow: safeNumVal(invCashflow),
+    free_cashflow: safeNumVal(freeCashflow),
+    cash_equiv: safeNumVal(cashEquiv),
+    consec_div_years: safeNumVal(consecDivYears),
+    doe: safeNumVal(item.doe),
+    rnd_expense: safeNumVal(rndExpense),
+    capex: safeNumVal(item.capex),
+    employees: safeNumVal(item.employees),
+    overseas_ratio: safeNumVal(overseasRatio),
     updated_at: new Date().toISOString()
   };
 }
@@ -223,11 +263,15 @@ const DataStore = {
     try {
       const response = await fetch('./config.json');
       const config = await response.json();
-      if (config.GAS_WEB_APP_URL) {
-        gasAppUrl = config.GAS_WEB_APP_URL;
-        console.log('✅ GAS Web App configured');
+      if (config.SUPABASE_URL && config.SUPABASE_KEY) {
+        if (window.supabase) {
+          supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_KEY);
+          console.log('✅ Supabase initialized');
+        } else {
+          console.error('❌ Supabase SDK (window.supabase) が読み込まれていません。index.html を確認してください。');
+        }
       } else {
-        console.error('❌ config.json に GAS_WEB_APP_URL が未設定:', config);
+        console.error('❌ config.json に SUPABASE_URL または SUPABASE_KEY が未設定です。');
       }
     } catch (e) {
       console.error('❌ Failed to initialize config:', e);
@@ -235,15 +279,14 @@ const DataStore = {
   },
 
   async getAll() {
-    if (!gasAppUrl) return [];
+    if (!supabaseClient) return [];
     try {
-      // キャッシュを無視して常に最新データを取得するようパラメータ(t)を付与
-      const res = await fetch(`${gasAppUrl}?t=${new Date().getTime()}`, {
-        cache: 'no-store'
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
-      return json.data.map(mapEvaluationFromDb).sort((a,b) => String(a.code || '').localeCompare(String(b.code || '')));
+      const { data, error } = await supabaseClient
+        .from('shikiho_evaluations')
+        .select('*')
+        .order('code');
+      if (error) throw error;
+      return data.map(mapEvaluationFromDb).sort((a,b) => String(a.code || '').localeCompare(String(b.code || '')));
     } catch (e) {
       console.error('Failed to get all evaluations:', e);
       return [];
@@ -261,18 +304,17 @@ const DataStore = {
   },
 
   async add(item) {
-    if (!gasAppUrl) return null;
+    if (!supabaseClient) return null;
     try {
       const dbRow = mapEvaluationToDb(item);
-      delete dbRow.id; // DB側で生成
-      const res = await fetch(gasAppUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'add', item: dbRow })
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
-      return mapEvaluationFromDb(json.data);
+      delete dbRow.id; // DB側で自動生成 (UUID)
+      const { data, error } = await supabaseClient
+        .from('shikiho_evaluations')
+        .insert([dbRow])
+        .select()
+        .single();
+      if (error) throw error;
+      return mapEvaluationFromDb(data);
     } catch (e) {
       console.error('Failed to add evaluation:', e);
       return null;
@@ -280,7 +322,7 @@ const DataStore = {
   },
 
   async update(id, updates) {
-    if (!gasAppUrl) return null;
+    if (!supabaseClient) return null;
     try {
       const dbRow = {};
       const keyMapping = {
@@ -349,13 +391,11 @@ const DataStore = {
         }
       }
 
-      const res = await fetch(gasAppUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'update', id: id, updates: dbRow })
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
+      const { error } = await supabaseClient
+        .from('shikiho_evaluations')
+        .update(dbRow)
+        .eq('id', id);
+      if (error) throw error;
       return true;
     } catch (e) {
       console.error('Failed to update evaluation:', e);
@@ -364,15 +404,13 @@ const DataStore = {
   },
 
   async remove(id) {
-    if (!gasAppUrl) return;
+    if (!supabaseClient) return;
     try {
-      const res = await fetch(gasAppUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'delete', id: id })
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
+      const { error } = await supabaseClient
+        .from('shikiho_evaluations')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     } catch (e) {
       console.error('Failed to delete evaluation:', e);
     }
@@ -391,7 +429,29 @@ const DataStore = {
   },
 
   async importAll(jsonStr) {
-    alert('一括インポート機能は現在スプレッドシート(GAS)版ではサポートされていません。直接スプレッドシートに貼り付けてください。');
+    if (!supabaseClient) return;
+    try {
+      const items = JSON.parse(jsonStr);
+      if (!Array.isArray(items)) throw new Error('JSON data must be an array');
+      
+      const { error: delError } = await supabaseClient
+        .from('shikiho_evaluations')
+        .delete()
+        .neq('code', '0000'); // code が '0000' でないものを全削除（全件削除）
+      if (delError) throw delError;
+
+      const dbRows = items.map(mapEvaluationToDb).map(row => {
+        if (!row.id) delete row.id;
+        return row;
+      });
+
+      const { error: insError } = await supabaseClient
+        .from('shikiho_evaluations')
+        .insert(dbRows);
+      if (insError) throw insError;
+    } catch(e) {
+      throw new Error('インポートに失敗しました: ' + e.message);
+    }
   }
 };
 
