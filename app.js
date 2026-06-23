@@ -51,6 +51,9 @@ const AppState = {
   sortColumn: 'highDividend',
   sortAsc: false,
   searchQuery: '',
+  filterIndustry: '',
+  filterSettlement: '',
+  filterStatus: '',
   selectedId: null
 };
 
@@ -721,6 +724,9 @@ async function renderTable() {
 
   let data = await DataStore.getByIssue(AppState.currentIssueKey);
 
+  // フィルター用の選択肢を元のデータから抽出して動的生成
+  updateFilterOptions(data);
+
   // Search filter
   if (AppState.searchQuery) {
     const q = AppState.searchQuery.toLowerCase();
@@ -728,6 +734,21 @@ async function renderTable() {
       (d.code && String(d.code).includes(q)) ||
       (d.name && d.name.toLowerCase().includes(q))
     );
+  }
+
+  // 業種フィルター
+  if (AppState.filterIndustry) {
+    data = data.filter(d => d.industry === AppState.filterIndustry);
+  }
+
+  // 決算月フィルター
+  if (AppState.filterSettlement) {
+    data = data.filter(d => d.settlement === AppState.filterSettlement);
+  }
+
+  // ステータスフィルター
+  if (AppState.filterStatus) {
+    data = data.filter(d => d.status === AppState.filterStatus);
   }
 
   // Sort
@@ -871,6 +892,57 @@ function renderRatingBadge(rating) {
   return `<span class="rating-badge rating-${rating}">${rating}</span>`;
 }
 
+function updateFilterOptions(allDataInIssue) {
+  const indSelect = document.getElementById('filterIndustry');
+  const settSelect = document.getElementById('filterSettlement');
+  const statSelect = document.getElementById('filterStatus');
+
+  if (!indSelect || !settSelect || !statSelect) return;
+
+  const selectedInd = indSelect.value;
+  const selectedSett = settSelect.value;
+  const selectedStat = statSelect.value;
+
+  const industries = new Set();
+  const settlements = new Set();
+  const statuses = new Set();
+
+  allDataInIssue.forEach(item => {
+    if (item.industry) industries.add(item.industry);
+    if (item.settlement) settlements.add(item.settlement);
+    if (item.status) statuses.add(item.status);
+  });
+
+  const indList = Array.from(industries).sort();
+  const settList = Array.from(settlements).sort();
+  const statList = Array.from(statuses).sort();
+
+  indSelect.innerHTML = '<option value="">- 全業種 -</option>' + 
+    indList.map(val => `<option value="${val}">${val}</option>`).join('');
+  settSelect.innerHTML = '<option value="">- 全決算 -</option>' + 
+    settList.map(val => `<option value="${val}">${val}</option>`).join('');
+  statSelect.innerHTML = '<option value="">- 全ステータス -</option>' + 
+    statList.map(val => `<option value="${val}">${val}</option>`).join('');
+
+  if (indList.includes(selectedInd)) {
+    indSelect.value = selectedInd;
+  } else {
+    AppState.filterIndustry = '';
+  }
+
+  if (settList.includes(selectedSett)) {
+    settSelect.value = selectedSett;
+  } else {
+    AppState.filterSettlement = '';
+  }
+
+  if (statList.includes(selectedStat)) {
+    statSelect.value = selectedStat;
+  } else {
+    AppState.filterStatus = '';
+  }
+}
+
 // ============================================================
 // Sort Handling
 // ============================================================
@@ -915,6 +987,19 @@ function initIssueSelector() {
     const year = yearSelect.value;
     const number = numberSelect.value;
     AppState.currentIssueKey = getIssueKey(year, number);
+    
+    // フィルター状態とセレクトボックスをリセット
+    const indSelect = document.getElementById('filterIndustry');
+    const settSelect = document.getElementById('filterSettlement');
+    const statSelect = document.getElementById('filterStatus');
+    if (indSelect) indSelect.value = '';
+    if (settSelect) settSelect.value = '';
+    if (statSelect) statSelect.value = '';
+    
+    AppState.filterIndustry = '';
+    AppState.filterSettlement = '';
+    AppState.filterStatus = '';
+    
     renderTable();
   }
 
@@ -2129,6 +2214,30 @@ function initEvents() {
       }
     } catch(err) { /* 無効なJSONは無視 */ }
   });
+
+  // Filter change handlers
+  const filterInd = document.getElementById('filterIndustry');
+  const filterSett = document.getElementById('filterSettlement');
+  const filterStat = document.getElementById('filterStatus');
+  
+  if (filterInd) {
+    filterInd.addEventListener('change', (e) => {
+      AppState.filterIndustry = e.target.value;
+      renderTable();
+    });
+  }
+  if (filterSett) {
+    filterSett.addEventListener('change', (e) => {
+      AppState.filterSettlement = e.target.value;
+      renderTable();
+    });
+  }
+  if (filterStat) {
+    filterStat.addEventListener('change', (e) => {
+      AppState.filterStatus = e.target.value;
+      renderTable();
+    });
+  }
 
   // Detail
   document.getElementById('detailClose').addEventListener('click', hideDetail);
