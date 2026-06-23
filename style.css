@@ -555,6 +555,12 @@ body {
   white-space: nowrap;
 }
 
+.col-settlement {
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
 .col-center {
   text-align: center;
 }

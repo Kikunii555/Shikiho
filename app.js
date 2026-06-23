@@ -700,7 +700,7 @@ async function renderTable() {
       <tr data-id="${item.id}">
         <td class="col-code">${item.code || '-'}</td>
         <td class="col-name" title="${item.name || ''}">${item.name || '-'}</td>
-        <td>${item.settlement || '-'}</td>
+        <td class="col-settlement">${item.settlement || '-'}</td>
         <td>${item.industry || '-'}</td>
         <td>${renderStatusSelect(item.status)}</td>
         <td class="col-keywords">${renderKeywords(item.keywords)}</td>
