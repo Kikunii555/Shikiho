@@ -67,6 +67,7 @@
           <tr>
             <th data-sort="code" style="width:70px">コード <span class="sort-icon">▼</span></th>
             <th data-sort="name">社名 <span class="sort-icon">▼</span></th>
+            <th data-sort="settlement" style="width:95px">決算 <span class="sort-icon">▼</span></th>
             <th data-sort="industry" style="width:120px">業種 <span class="sort-icon">▼</span></th>
             <th data-sort="status" style="width:130px">ステータス <span class="sort-icon">▼</span></th>
             <th style="width:180px">キーワード</th>
@@ -158,6 +159,11 @@
           <div class="form-group">
             <label class="form-label">社名（自動入力）</label>
             <input type="text" class="form-input" id="inputName" placeholder="銘柄コード入力で自動反映">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">決算月</label>
+            <input type="text" class="form-input" id="inputSettlement" placeholder="例: 3 (自動で中間も判別) または 3月/9月">
           </div>
 
           <div class="form-group">
@@ -386,6 +392,7 @@
           <span class="detail-code" id="detailCode"></span>
           <span class="detail-name" id="detailName"></span>
         </div>
+        <span class="detail-settlement-badge" id="detailSettlement"></span>
         <span class="detail-industry-badge" id="detailIndustry"></span>
         <span class="detail-market-badge" id="detailMarket"></span>
         <button class="modal-close" id="detailClose">✕</button>

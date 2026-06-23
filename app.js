@@ -151,6 +151,7 @@ function mapEvaluationToDb(item) {
     capex: safeNumVal(item.capex),
     employees: safeNumVal(item.employees),
     overseas_ratio: safeNumVal(overseasRatio),
+    settlement: item.settlement || '',
     updated_at: new Date().toISOString()
   };
 }
@@ -219,6 +220,7 @@ function mapEvaluationFromDb(row) {
     capex: safeParseFloat(row.capex),
     employees: safeParseInt(row.employees),
     overseasRatio: safeParseFloat(row.overseas_ratio),
+    settlement: row.settlement || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -376,7 +378,8 @@ const DataStore = {
         rndExpense: 'rnd_expense',
         capex: 'capex',
         employees: 'employees',
-        overseasRatio: 'overseas_ratio'
+        overseasRatio: 'overseas_ratio',
+        settlement: 'settlement'
       };
 
       for (const [jsKey, dbKey] of Object.entries(keyMapping)) {
@@ -597,6 +600,27 @@ function parseIssueKey(key) {
   return { year: parseInt(year), number: parseInt(number) };
 }
 
+function formatSettlement(val) {
+  if (val === null || val === undefined) return '';
+  let str = String(val).trim();
+  if (!str) return '';
+
+  if (str.includes('/') || str.includes(',') || str.includes('中間') || str.includes('・')) {
+    return str;
+  }
+
+  const match = str.match(/^(\d+)(?:月)?$/);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    if (num >= 1 && num <= 12) {
+      const interim = (num + 6) > 12 ? (num + 6 - 12) : (num + 6);
+      return `${num}月 (中間: ${interim}月)`;
+    }
+  }
+
+  return str;
+}
+
 function computeOverallGrade(item) {
   const hdTotal = item.highDividendScore ? item.highDividendScore.total : 0;
   const grTotal = item.growthScore ? item.growthScore.total : 0;
@@ -613,6 +637,7 @@ function getSortValue(item, column) {
   switch (column) {
     case 'code': return item.code || '';
     case 'name': return item.name || '';
+    case 'settlement': return item.settlement || '';
     case 'industry': return item.industry || '';
     case 'status': return item.status || '';
     case 'highDividend': return item.highDividendScore ? item.highDividendScore.total : 0;
@@ -675,6 +700,7 @@ async function renderTable() {
       <tr data-id="${item.id}">
         <td class="col-code">${item.code || '-'}</td>
         <td class="col-name" title="${item.name || ''}">${item.name || '-'}</td>
+        <td>${item.settlement || '-'}</td>
         <td>${item.industry || '-'}</td>
         <td>${renderStatusSelect(item.status)}</td>
         <td class="col-keywords">${renderKeywords(item.keywords)}</td>
@@ -867,6 +893,15 @@ async function showDetail(id) {
   const overlay = document.getElementById('detailOverlay');
   document.getElementById('detailCode').textContent = item.code;
   document.getElementById('detailName').textContent = item.name;
+
+  const settEl = document.getElementById('detailSettlement');
+  if (item.settlement) {
+    settEl.textContent = '決算: ' + item.settlement;
+    settEl.style.display = '';
+  } else {
+    settEl.textContent = '';
+    settEl.style.display = 'none';
+  }
 
   const indEl = document.getElementById('detailIndustry');
   if (item.industry) {
@@ -1266,6 +1301,7 @@ function populateForm(item) {
     updateStockNameDisplay(item.code);
   }
   document.getElementById('inputName').value = item.name || '';
+  document.getElementById('inputSettlement').value = item.settlement || '';
   document.getElementById('inputIndustry').value = item.industry || '';
   document.getElementById('inputMarket').value = normalizeMarketValue(item.market);
   if (!item.industry && item.code) {
@@ -1511,6 +1547,7 @@ function collectFormData() {
     issueKey: getIssueKey(year, number),
     code: document.getElementById('inputCode').value.trim(),
     name: document.getElementById('inputName').value.trim(),
+    settlement: formatSettlement(document.getElementById('inputSettlement').value.trim()),
     industry: document.getElementById('inputIndustry').value.trim(),
     market: document.getElementById('inputMarket').value.trim(),
     status: document.getElementById('inputStatus').value,
@@ -1648,6 +1685,7 @@ async function applyParsedJson(data) {
     // 1. 🏢 銘柄基本情報
     code: 'inputCode',
     name: 'inputName',
+    settlement: 'inputSettlement',
     industry: 'inputIndustry',
     market: 'inputMarket',
     status: 'inputStatus',
@@ -1697,7 +1735,11 @@ async function applyParsedJson(data) {
 
   for (const [key, inputId] of Object.entries(mapping)) {
     if (data[key] !== undefined && data[key] !== null) {
-      document.getElementById(inputId).value = data[key];
+      if (key === 'settlement') {
+        document.getElementById(inputId).value = formatSettlement(data[key]);
+      } else {
+        document.getElementById(inputId).value = data[key];
+      }
     }
   }
 
@@ -1988,6 +2030,9 @@ function initEvents() {
   document.getElementById('btnCancelForm').addEventListener('click', closeRegisterModal);
   document.getElementById('btnSaveForm').addEventListener('click', saveForm);
   document.getElementById('btnParseJson').addEventListener('click', parseJsonInput);
+  document.getElementById('inputSettlement').addEventListener('blur', (e) => {
+    e.target.value = formatSettlement(e.target.value);
+  });
 
   // Detail
   document.getElementById('detailClose').addEventListener('click', hideDetail);

@@ -53,6 +53,7 @@ create table if not exists shikiho_evaluations (
   ratings jsonb,
   keywords text,
   industry varchar(100),
+  settlement varchar(100),
   status varchar(50),
   market varchar(50),
   dividend_score integer,
@@ -84,6 +85,7 @@ create table if not exists shikiho_evaluations (
 
 -- 既存テーブルの移行用 (もしテーブルが既に存在する場合に実行してください)
 -- alter table shikiho_evaluations add column if not exists market varchar(50);
+-- alter table shikiho_evaluations add column if not exists settlement varchar(100);
 -- alter table shikiho_evaluations add column if not exists op_margin numeric;
 -- alter table shikiho_evaluations add column if not exists ordinary_margin numeric;
 -- alter table shikiho_evaluations add column if not exists eps numeric;
