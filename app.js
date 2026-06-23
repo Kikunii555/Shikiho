@@ -621,6 +621,65 @@ function formatSettlement(val) {
   return str;
 }
 
+function calculateGrowthFromEarnings(earnings) {
+  if (!Array.isArray(earnings) || earnings.length < 2) return null;
+
+  const actuals = [];
+  const forecasts = [];
+
+  earnings.forEach(e => {
+    const period = String(e.period || '').trim();
+    if (!period) return;
+    if (period.includes('予') || period.includes('会') || period.includes('cast')) {
+      forecasts.push(e);
+    } else {
+      actuals.push(e);
+    }
+  });
+
+  let actual = null;
+  let forecast = null;
+
+  if (actuals.length > 0 && forecasts.length > 0) {
+    actual = actuals[actuals.length - 1];
+    forecast = forecasts[0];
+  } else {
+    const sorted = [...earnings].sort((a, b) => String(a.period).localeCompare(String(b.period)));
+    actual = sorted[sorted.length - 2];
+    forecast = sorted[sorted.length - 1];
+  }
+
+  if (!actual || !forecast) return null;
+
+  const result = {};
+
+  if (actual.revenue && forecast.revenue) {
+    const actRev = parseFloat(actual.revenue);
+    const foreRev = parseFloat(forecast.revenue);
+    if (actRev > 0) {
+      result.revenueGrowth = Math.round(((foreRev - actRev) / actRev * 100) * 10) / 10;
+    }
+  }
+
+  if (actual.opProfit !== undefined && actual.opProfit !== null && forecast.opProfit !== undefined && forecast.opProfit !== null) {
+    const actOp = parseFloat(actual.opProfit);
+    const foreOp = parseFloat(forecast.opProfit);
+    if (actOp > 0) {
+      result.opProfitGrowth = Math.round(((foreOp - actOp) / actOp * 100) * 10) / 10;
+    }
+  }
+
+  if (actual.netProfit !== undefined && actual.netProfit !== null && forecast.netProfit !== undefined && forecast.netProfit !== null) {
+    const actNet = parseFloat(actual.netProfit);
+    const foreNet = parseFloat(forecast.netProfit);
+    if (actNet > 0) {
+      result.epsGrowth = Math.round(((foreNet - actNet) / actNet * 100) * 10) / 10;
+    }
+  }
+
+  return result;
+}
+
 function computeOverallGrade(item) {
   const hdTotal = item.highDividendScore ? item.highDividendScore.total : 0;
   const grTotal = item.growthScore ? item.growthScore.total : 0;
@@ -1787,6 +1846,24 @@ async function applyParsedJson(data) {
 
   if (data.earnings && Array.isArray(data.earnings)) {
     document.getElementById('inputEarnings').value = JSON.stringify(data.earnings);
+
+    // 業績データ（earnings）から成長率を自動計算して補完する
+    const growth = calculateGrowthFromEarnings(data.earnings);
+    if (growth) {
+      const revEl = document.getElementById('inputRevenueGrowth');
+      const opEl = document.getElementById('inputOpProfitGrowth');
+      const epsEl = document.getElementById('inputEpsGrowth');
+
+      if ((!revEl.value || data.revenueGrowth === null) && growth.revenueGrowth !== undefined) {
+        revEl.value = growth.revenueGrowth;
+      }
+      if ((!opEl.value || data.opProfitGrowth === null) && growth.opProfitGrowth !== undefined) {
+        opEl.value = growth.opProfitGrowth;
+      }
+      if ((!epsEl.value || data.epsGrowth === null) && growth.epsGrowth !== undefined) {
+        epsEl.value = growth.epsGrowth;
+      }
+    }
   }
 }
 
@@ -2032,6 +2109,25 @@ function initEvents() {
   document.getElementById('btnParseJson').addEventListener('click', parseJsonInput);
   document.getElementById('inputSettlement').addEventListener('blur', (e) => {
     e.target.value = formatSettlement(e.target.value);
+  });
+  document.getElementById('inputEarnings').addEventListener('blur', (e) => {
+    try {
+      const val = e.target.value.trim();
+      if (!val) return;
+      const earnings = JSON.parse(val);
+      if (Array.isArray(earnings) && earnings.length >= 2) {
+        const growth = calculateGrowthFromEarnings(earnings);
+        if (growth) {
+          const revEl = document.getElementById('inputRevenueGrowth');
+          const opEl = document.getElementById('inputOpProfitGrowth');
+          const epsEl = document.getElementById('inputEpsGrowth');
+          
+          if (!revEl.value && growth.revenueGrowth !== undefined) revEl.value = growth.revenueGrowth;
+          if (!opEl.value && growth.opProfitGrowth !== undefined) opEl.value = growth.opProfitGrowth;
+          if (!epsEl.value && growth.epsGrowth !== undefined) epsEl.value = growth.epsGrowth;
+        }
+      }
+    } catch(err) { /* 無効なJSONは無視 */ }
   });
 
   // Detail
