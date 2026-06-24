@@ -885,9 +885,17 @@ function renderKeywords(keywords) {
 function renderScoreCell(score) {
   if (!score) return '<span style="color:var(--color-text-tertiary)">-</span>';
   const total = score.total != null ? score.total : 0;
+  
+  let colorStyle = '';
+  if (total >= 80) {
+    colorStyle = 'style="color: #dc2626; font-weight: 700;"';
+  } else if (total <= 40) {
+    colorStyle = 'style="color: #2563eb; font-weight: 700;"';
+  }
+
   return `
     <div class="score-cell">
-      <span class="score-total-large">${total}</span>
+      <span class="score-total-large" ${colorStyle}>${total}</span>
     </div>
   `;
 }
