@@ -862,24 +862,41 @@ function renderKeywords(keywords) {
   const parts = keywords.split(/[,，]/).map(kw => kw.trim()).filter(Boolean);
   if (parts.length === 0) return '<span style="color:var(--color-text-tertiary)">-</span>';
 
-  const showParts = parts.slice(0, 2);
-  const html = showParts.map(kw => {
-    let trimKw = kw;
-    let tagClass = 'keyword-tag';
-    if (trimKw.startsWith('+')) {
-      tagClass = 'keyword-tag-positive';
-      trimKw = trimKw.substring(1);
-    } else if (trimKw.startsWith('-')) {
-      tagClass = 'keyword-tag-negative';
-      trimKw = trimKw.substring(1);
-    }
-    return `<span class="${tagClass}" title="${escapeHtml(trimKw)}">${escapeHtml(trimKw)}</span>`;
-  }).join('');
+  const posKws = [];
+  const negKws = [];
 
-  if (parts.length > 2) {
-    return html + '<span style="color:var(--color-text-muted); font-size:0.75rem; margin-left:2px; vertical-align:middle;">...</span>';
+  parts.forEach(kw => {
+    if (kw.startsWith('+')) {
+      posKws.push(kw.substring(1));
+    } else if (kw.startsWith('-')) {
+      negKws.push(kw.substring(1));
+    } else {
+      posKws.push(kw);
+    }
+  });
+
+  const renderLine = (kws, prefixClass) => {
+    const showKws = kws.slice(0, 2);
+    let lineHtml = showKws.map(kw => {
+      return `<span class="${prefixClass}" title="${escapeHtml(kw)}">${escapeHtml(kw)}</span>`;
+    }).join('');
+    
+    if (kws.length > 2) {
+      lineHtml += '<span style="color:var(--color-text-muted); font-size:0.65rem; margin-left:2px; vertical-align:middle;">...</span>';
+    }
+    return lineHtml;
+  };
+
+  let html = '';
+  if (posKws.length > 0) {
+    html += `<div style="display:inline-flex; flex-wrap:nowrap; align-items:center; vertical-align:middle;">${renderLine(posKws, 'keyword-tag-positive')}</div>`;
   }
-  return html;
+  if (negKws.length > 0) {
+    if (html) html += '<br>';
+    html += `<div style="display:inline-flex; flex-wrap:nowrap; align-items:center; vertical-align:middle;">${renderLine(negKws, 'keyword-tag-negative')}</div>`;
+  }
+
+  return html || '<span style="color:var(--color-text-tertiary)">-</span>';
 }
 
 function renderScoreCell(score) {
