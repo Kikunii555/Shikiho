@@ -847,7 +847,9 @@ function renderStatusSelect(status) {
     { value: '優待保有', label: '優待保有' },
     { value: '要注目', label: '要注目' },
     { value: '様子見', label: '様子見' },
-    { value: '新規', label: '新規' }
+    { value: '新規', label: '新規' },
+    { value: '保留', label: '保留' },
+    { value: '売却候補', label: '売却候補' }
   ];
   
   return `

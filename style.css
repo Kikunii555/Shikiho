@@ -1590,6 +1590,8 @@ textarea.form-input {
 .status-select[data-status="要注目"] { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
 .status-select[data-status="様子見"] { background-color: #e0f2fe; color: #075985; border-color: #bae6fd; }
 .status-select[data-status="新規"] { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+.status-select[data-status="保留"] { background-color: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.status-select[data-status="売却候補"] { background-color: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 
 .status-badge {
   display: inline-block;
@@ -1608,6 +1610,8 @@ textarea.form-input {
 .status-badge.status-要注目 { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
 .status-badge.status-様子見 { background-color: #e0f2fe; color: #075985; border-color: #bae6fd; }
 .status-badge.status-新規 { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+.status-badge.status-保留 { background-color: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.status-badge.status-売却候補 { background-color: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 
 /* ========================================
    Form Section Labels
