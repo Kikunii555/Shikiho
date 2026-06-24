@@ -1534,6 +1534,13 @@ textarea.form-input {
   transition: all var(--transition-fast);
 }
 
+.keyword-tag, .keyword-tag-positive, .keyword-tag-negative {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
 .keyword-tag:hover {
   background-color: var(--color-primary);
   color: white;
@@ -1579,7 +1586,7 @@ textarea.form-input {
 .status-select[data-status="優待保有"] { background-color: #fce7f3; color: #9d174d; border-color: #fbcfe8; }
 .status-select[data-status="要注目"] { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
 .status-select[data-status="様子見"] { background-color: #e0f2fe; color: #075985; border-color: #bae6fd; }
-.status-select[data-status="新規"] { background-color: #f1f5f9; color: #334155; border-color: #e2e8f0; }
+.status-select[data-status="新規"] { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
 
 .status-badge {
   display: inline-block;
@@ -1597,7 +1604,7 @@ textarea.form-input {
 .status-badge.status-優待保有 { background-color: #fce7f3; color: #9d174d; border-color: #fbcfe8; }
 .status-badge.status-要注目 { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
 .status-badge.status-様子見 { background-color: #e0f2fe; color: #075985; border-color: #bae6fd; }
-.status-badge.status-新規 { background-color: #f1f5f9; color: #334155; border-color: #e2e8f0; }
+.status-badge.status-新規 { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
 
 /* ========================================
    Form Section Labels

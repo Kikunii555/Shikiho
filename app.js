@@ -776,11 +776,23 @@ async function renderTable() {
 
   tbody.innerHTML = data.map(item => {
     const overall = computeOverallGrade(item);
+    
+    // 決算月の色分け（12月・6月は青、3月以外は赤）
+    let settlementStyle = '';
+    const sett = item.settlement || '';
+    if (sett) {
+      if (sett.includes('12月') || sett.includes('6月')) {
+        settlementStyle = 'style="color: #2563eb;"';
+      } else if (!sett.includes('3月')) {
+        settlementStyle = 'style="color: #dc2626;"';
+      }
+    }
+
     return `
       <tr data-id="${item.id}">
         <td class="col-code">${item.code || '-'}</td>
         <td class="col-name" title="${item.name || ''}">${item.name || '-'}</td>
-        <td class="col-settlement">${item.settlement || '-'}</td>
+        <td class="col-settlement" ${settlementStyle}>${item.settlement || '-'}</td>
         <td>${item.industry || '-'}</td>
         <td>${renderStatusSelect(item.status)}</td>
         <td class="col-keywords">${renderKeywords(item.keywords)}</td>
@@ -847,9 +859,12 @@ function renderStatusSelect(status) {
 
 function renderKeywords(keywords) {
   if (!keywords || typeof keywords !== 'string' || keywords.startsWith('#')) return '<span style="color:var(--color-text-tertiary)">-</span>';
-  return keywords.split(/[,，]/).map(kw => {
-    let trimKw = kw.trim();
-    if (!trimKw) return '';
+  const parts = keywords.split(/[,，]/).map(kw => kw.trim()).filter(Boolean);
+  if (parts.length === 0) return '<span style="color:var(--color-text-tertiary)">-</span>';
+
+  const showParts = parts.slice(0, 2);
+  const html = showParts.map(kw => {
+    let trimKw = kw;
     let tagClass = 'keyword-tag';
     if (trimKw.startsWith('+')) {
       tagClass = 'keyword-tag-positive';
@@ -858,31 +873,21 @@ function renderKeywords(keywords) {
       tagClass = 'keyword-tag-negative';
       trimKw = trimKw.substring(1);
     }
-    return `<span class="${tagClass}">${escapeHtml(trimKw)}</span>`;
+    return `<span class="${tagClass}" title="${escapeHtml(trimKw)}">${escapeHtml(trimKw)}</span>`;
   }).join('');
+
+  if (parts.length > 2) {
+    return html + '<span style="color:var(--color-text-muted); font-size:0.75rem; margin-left:2px; vertical-align:middle;">...</span>';
+  }
+  return html;
 }
 
 function renderScoreCell(score) {
   if (!score) return '<span style="color:var(--color-text-tertiary)">-</span>';
   const total = score.total != null ? score.total : 0;
-  const base = score.base != null ? score.base : 0;
-  const bonus = score.bonus != null ? score.bonus : 0;
-
-  if (bonus === 0) {
-    return `
-      <div class="score-cell">
-        <span class="score-total-large">${total}</span>
-        <span class="score-breakdown-inline">(${base})</span>
-      </div>
-    `;
-  }
-
-  const bonusClass = bonus > 0 ? 'positive' : 'negative';
-  const bonusPrefix = bonus > 0 ? '+' : '';
   return `
     <div class="score-cell">
       <span class="score-total-large">${total}</span>
-      <span class="score-breakdown-inline">(${base}<span class="score-bonus-inline ${bonusClass}">${bonusPrefix}${bonus}</span>)</span>
     </div>
   `;
 }
