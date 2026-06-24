@@ -1534,7 +1534,9 @@ textarea.form-input {
   transition: all var(--transition-fast);
 }
 
-.keyword-tag, .keyword-tag-positive, .keyword-tag-negative {
+.col-keywords .keyword-tag,
+.col-keywords .keyword-tag-positive,
+.col-keywords .keyword-tag-negative {
   max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
