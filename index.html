@@ -54,9 +54,21 @@
         <input type="text" class="search-input" id="searchInput" placeholder="銘柄コード・社名で検索...">
       </div>
       <div class="filter-group">
-        <select class="filter-select" id="filterIndustry" title="業種で絞り込み">
-          <option value="">- 全業種 -</option>
-        </select>
+        <div class="custom-multiselect" id="multiselectIndustry">
+          <button type="button" class="multiselect-trigger" id="multiselectIndustryBtn" title="業種で絞り込み">
+            <span class="multiselect-trigger-text" id="multiselectIndustryText">- 全業種 -</span>
+            <span class="multiselect-arrow">▼</span>
+          </button>
+          <div class="multiselect-dropdown" id="multiselectIndustryDropdown">
+            <div class="multiselect-actions">
+              <button type="button" class="btn btn-sm btn-ghost" id="btnSelectAllIndustry">すべて選択</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="btnClearIndustry">クリア</button>
+            </div>
+            <div class="multiselect-options" id="multiselectIndustryOptions">
+              <!-- JSでチェックボックスを動的生成 -->
+            </div>
+          </div>
+        </div>
         <select class="filter-select" id="filterSettlement" title="決算月で絞り込み">
           <option value="">- 全決算 -</option>
         </select>

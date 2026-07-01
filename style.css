@@ -1717,3 +1717,157 @@ textarea.form-input {
   color: #2563eb !important; /* 青（悪い） */
   font-weight: 600 !important;
 }
+
+/* ========================================
+   Custom Multiselect (Industry Filter)
+   ======================================== */
+.custom-multiselect {
+  position: relative;
+  display: inline-block;
+  min-width: 140px;
+  user-select: none;
+}
+
+.multiselect-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
+  text-align: left;
+  line-height: 1.5;
+}
+
+.multiselect-trigger:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  background-color: var(--color-surface-elevated);
+}
+
+.multiselect-trigger:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.multiselect-trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+  max-width: 150px;
+}
+
+.multiselect-arrow {
+  font-size: 8px;
+  color: var(--color-text-secondary);
+  transition: transform var(--transition-fast);
+  pointer-events: none;
+}
+
+.custom-multiselect.active .multiselect-arrow {
+  transform: rotate(180deg);
+}
+
+.multiselect-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 150;
+  min-width: 280px;
+  max-width: 320px;
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  display: none;
+  flex-direction: column;
+  padding: var(--spacing-sm);
+}
+
+.custom-multiselect.active .multiselect-dropdown {
+  display: flex;
+}
+
+.multiselect-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--spacing-sm);
+}
+
+.multiselect-actions .btn {
+  padding: 6px 8px;
+  font-size: 11px;
+  flex: 1;
+  border-radius: var(--radius-sm);
+}
+
+.multiselect-options {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* スクロールバーのカスタマイズ (Firefox用および標準) */
+.multiselect-options {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+
+/* Chrome/Safari用スクロールバー */
+.multiselect-options::-webkit-scrollbar {
+  width: 5px;
+}
+.multiselect-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+.multiselect-options::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.multiselect-option {
+  display: flex;
+  align-items: center;
+  padding: 6px var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.multiselect-option:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.multiselect-option input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.multiselect-option-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

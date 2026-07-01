@@ -51,7 +51,7 @@ const AppState = {
   sortColumn: 'highDividend',
   sortAsc: false,
   searchQuery: '',
-  filterIndustry: '',
+  filterIndustries: [],
   filterSettlement: '',
   filterStatus: '',
   selectedId: null
@@ -736,9 +736,9 @@ async function renderTable() {
     );
   }
 
-  // 業種フィルター
-  if (AppState.filterIndustry) {
-    data = data.filter(d => d.industry === AppState.filterIndustry);
+  // 業種フィルター（複数選択）
+  if (AppState.filterIndustries && AppState.filterIndustries.length > 0) {
+    data = data.filter(d => AppState.filterIndustries.includes(d.industry));
   }
 
   // 決算月フィルター
@@ -925,13 +925,12 @@ function renderRatingBadge(rating) {
 }
 
 function updateFilterOptions(allDataInIssue) {
-  const indSelect = document.getElementById('filterIndustry');
+  const indOptionsContainer = document.getElementById('multiselectIndustryOptions');
   const settSelect = document.getElementById('filterSettlement');
   const statSelect = document.getElementById('filterStatus');
 
-  if (!indSelect || !settSelect || !statSelect) return;
+  if (!indOptionsContainer || !settSelect || !statSelect) return;
 
-  const selectedInd = indSelect.value;
   const selectedSett = settSelect.value;
   const selectedStat = statSelect.value;
 
@@ -949,18 +948,27 @@ function updateFilterOptions(allDataInIssue) {
   const settList = Array.from(settlements).sort();
   const statList = Array.from(statuses).sort();
 
-  indSelect.innerHTML = '<option value="">- 全業種 -</option>' + 
-    indList.map(val => `<option value="${val}">${val}</option>`).join('');
+  // 業種リストの更新（現在有効なもののみ残す）
+  AppState.filterIndustries = AppState.filterIndustries.filter(val => indList.includes(val));
+
+  // チェックボックス一覧の生成
+  indOptionsContainer.innerHTML = indList.map(val => {
+    const checked = AppState.filterIndustries.includes(val) ? 'checked' : '';
+    return `
+      <label class="multiselect-option">
+        <input type="checkbox" value="${val}" ${checked}>
+        <span class="multiselect-option-text">${val}</span>
+      </label>
+    `;
+  }).join('');
+
+  // トリガーボタンテキストの更新
+  updateMultiselectTriggerText();
+
   settSelect.innerHTML = '<option value="">- 全決算 -</option>' + 
     settList.map(val => `<option value="${val}">${val}</option>`).join('');
   statSelect.innerHTML = '<option value="">- 全ステータス -</option>' + 
     statList.map(val => `<option value="${val}">${val}</option>`).join('');
-
-  if (indList.includes(selectedInd)) {
-    indSelect.value = selectedInd;
-  } else {
-    AppState.filterIndustry = '';
-  }
 
   if (settList.includes(selectedSett)) {
     settSelect.value = selectedSett;
@@ -972,6 +980,19 @@ function updateFilterOptions(allDataInIssue) {
     statSelect.value = selectedStat;
   } else {
     AppState.filterStatus = '';
+  }
+}
+
+function updateMultiselectTriggerText() {
+  const triggerText = document.getElementById('multiselectIndustryText');
+  if (!triggerText) return;
+
+  if (!AppState.filterIndustries || AppState.filterIndustries.length === 0) {
+    triggerText.textContent = '- 全業種 -';
+    triggerText.style.color = '';
+  } else {
+    triggerText.textContent = AppState.filterIndustries.join(', ');
+    triggerText.style.color = 'var(--color-text)'; // 選択中であることを強調
   }
 }
 
@@ -1021,16 +1042,15 @@ function initIssueSelector() {
     AppState.currentIssueKey = getIssueKey(year, number);
     
     // フィルター状態とセレクトボックスをリセット
-    const indSelect = document.getElementById('filterIndustry');
     const settSelect = document.getElementById('filterSettlement');
     const statSelect = document.getElementById('filterStatus');
-    if (indSelect) indSelect.value = '';
     if (settSelect) settSelect.value = '';
     if (statSelect) statSelect.value = '';
     
-    AppState.filterIndustry = '';
+    AppState.filterIndustries = [];
     AppState.filterSettlement = '';
     AppState.filterStatus = '';
+    updateMultiselectTriggerText();
     
     renderTable();
   }
@@ -2247,17 +2267,75 @@ function initEvents() {
     } catch(err) { /* 無効なJSONは無視 */ }
   });
 
-  // Filter change handlers
-  const filterInd = document.getElementById('filterIndustry');
+  // Custom Multiselect (Industry) Handlers
+  const multiselect = document.getElementById('multiselectIndustry');
+  const triggerBtn = document.getElementById('multiselectIndustryBtn');
+  const dropdown = document.getElementById('multiselectIndustryDropdown');
+  const optionsContainer = document.getElementById('multiselectIndustryOptions');
+  const btnSelectAll = document.getElementById('btnSelectAllIndustry');
+  const btnClear = document.getElementById('btnClearIndustry');
+
+  if (multiselect && triggerBtn && dropdown && optionsContainer) {
+    // 開閉
+    triggerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      multiselect.classList.toggle('active');
+    });
+
+    // 外側クリックで閉じる
+    document.addEventListener('click', (e) => {
+      if (!multiselect.contains(e.target)) {
+        multiselect.classList.remove('active');
+      }
+    });
+
+    // チェックボックス選択変更
+    optionsContainer.addEventListener('change', (e) => {
+      if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+        const val = e.target.value;
+        if (e.target.checked) {
+          if (!AppState.filterIndustries.includes(val)) {
+            AppState.filterIndustries.push(val);
+          }
+        } else {
+          AppState.filterIndustries = AppState.filterIndustries.filter(v => v !== val);
+        }
+        updateMultiselectTriggerText();
+        renderTable();
+      }
+    });
+
+    // すべて選択
+    if (btnSelectAll) {
+      btnSelectAll.addEventListener('click', () => {
+        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+        const newFilters = [];
+        checkboxes.forEach(cb => {
+          cb.checked = true;
+          newFilters.push(cb.value);
+        });
+        AppState.filterIndustries = newFilters;
+        updateMultiselectTriggerText();
+        renderTable();
+      });
+    }
+
+    // クリア
+    if (btnClear) {
+      btnClear.addEventListener('click', () => {
+        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+          cb.checked = false;
+        });
+        AppState.filterIndustries = [];
+        updateMultiselectTriggerText();
+        renderTable();
+      });
+    }
+  }
+
   const filterSett = document.getElementById('filterSettlement');
   const filterStat = document.getElementById('filterStatus');
-  
-  if (filterInd) {
-    filterInd.addEventListener('change', (e) => {
-      AppState.filterIndustry = e.target.value;
-      renderTable();
-    });
-  }
   if (filterSett) {
     filterSett.addEventListener('change', (e) => {
       AppState.filterSettlement = e.target.value;
