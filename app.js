@@ -55,28 +55,28 @@ const AppState = {
   filterSettlement: '',
   filterStatus: '',
   selectedId: null,
-  checkedCodes: new Set()
+  uncheckedCodes: new Set()
 };
 
-function loadCheckedCodes() {
+function loadUncheckedCodes() {
   try {
-    const saved = localStorage.getItem('shikiho_checked_codes');
+    const saved = localStorage.getItem('shikiho_unchecked_codes');
     if (saved) {
-      AppState.checkedCodes = new Set(JSON.parse(saved));
+      AppState.uncheckedCodes = new Set(JSON.parse(saved));
     } else {
-      AppState.checkedCodes = new Set();
+      AppState.uncheckedCodes = new Set();
     }
   } catch (e) {
-    console.error('Failed to load checked codes:', e);
-    AppState.checkedCodes = new Set();
+    console.error('Failed to load unchecked codes:', e);
+    AppState.uncheckedCodes = new Set();
   }
 }
 
-function saveCheckedCodes() {
+function saveUncheckedCodes() {
   try {
-    localStorage.setItem('shikiho_checked_codes', JSON.stringify(Array.from(AppState.checkedCodes)));
+    localStorage.setItem('shikiho_unchecked_codes', JSON.stringify(Array.from(AppState.uncheckedCodes)));
   } catch (e) {
-    console.error('Failed to save checked codes:', e);
+    console.error('Failed to save unchecked codes:', e);
   }
 }
 
@@ -747,6 +747,9 @@ async function renderTable() {
 
   let data = await DataStore.getByIssue(AppState.currentIssueKey);
 
+  // チェックボックスが外れている行（非表示リストに入っているもの）は非表示
+  data = data.filter(d => !AppState.uncheckedCodes.has(d.code));
+
   // フィルター用の選択肢を元のデータから抽出して動的生成
   updateFilterOptions(data);
 
@@ -757,8 +760,6 @@ async function renderTable() {
       (d.code && String(d.code).includes(q)) ||
       (d.name && d.name.toLowerCase().includes(q))
     );
-    // 検索表示の場合、チェックボックスが外れている行は非表示
-    data = data.filter(d => AppState.checkedCodes.has(d.code));
   }
 
   // 業種フィルター（複数選択）
@@ -794,6 +795,14 @@ async function renderTable() {
   if (data.length === 0) {
     tbody.innerHTML = '';
     emptyState.classList.add('visible');
+    
+    // ヘッダーの全選択チェックボックスの状態を更新
+    const headerSelectAll = document.getElementById('headerSelectAll');
+    if (headerSelectAll) {
+      const allData = await DataStore.getByIssue(AppState.currentIssueKey);
+      const hasUnchecked = allData.some(d => AppState.uncheckedCodes.has(d.code));
+      headerSelectAll.checked = !hasUnchecked;
+    }
     return;
   }
 
@@ -801,7 +810,7 @@ async function renderTable() {
 
   tbody.innerHTML = data.map(item => {
     const overall = computeOverallGrade(item);
-    const isChecked = AppState.checkedCodes.has(item.code) ? 'checked' : '';
+    const isChecked = !AppState.uncheckedCodes.has(item.code) ? 'checked' : '';
     
     // 決算月の色分け（12月・6月は青、3月以外は赤）
     let settlementStyle = '';
@@ -843,16 +852,12 @@ async function renderTable() {
     cb.addEventListener('change', () => {
       const code = cb.dataset.code;
       if (cb.checked) {
-        AppState.checkedCodes.add(code);
+        AppState.uncheckedCodes.delete(code);
       } else {
-        AppState.checkedCodes.delete(code);
+        AppState.uncheckedCodes.add(code);
       }
-      saveCheckedCodes();
-      
-      // 検索表示の場合は、チェックを外した瞬間に非表示になるよう再描画
-      if (AppState.searchQuery) {
-        renderTable();
-      }
+      saveUncheckedCodes();
+      renderTable();
     });
   });
 
@@ -885,6 +890,14 @@ async function renderTable() {
       }
     });
   });
+
+  // ヘッダーの全選択チェックボックスの状態を更新
+  const headerSelectAll = document.getElementById('headerSelectAll');
+  if (headerSelectAll) {
+    const allData = await DataStore.getByIssue(AppState.currentIssueKey);
+    const hasUnchecked = allData.some(d => AppState.uncheckedCodes.has(d.code));
+    headerSelectAll.checked = !hasUnchecked;
+  }
 }
 
 function renderStatusSelect(status) {
@@ -2461,6 +2474,23 @@ function initEvents() {
   document.getElementById('exportModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('exportModal')) closeExportModal();
   });
+
+  // Header Select All checkbox change handler
+  const headerSelectAll = document.getElementById('headerSelectAll');
+  if (headerSelectAll) {
+    headerSelectAll.addEventListener('change', async () => {
+      const allData = await DataStore.getByIssue(AppState.currentIssueKey);
+      if (headerSelectAll.checked) {
+        // すべてチェックON（非表示リストからすべて削除）
+        allData.forEach(d => AppState.uncheckedCodes.delete(d.code));
+      } else {
+        // すべてチェックOFF（非表示リストにすべて追加）
+        allData.forEach(d => AppState.uncheckedCodes.add(d.code));
+      }
+      saveUncheckedCodes();
+      renderTable();
+    });
+  }
   
   setupDynamicScoreEvents();
 }
@@ -2469,7 +2499,7 @@ function initEvents() {
 // Initialization
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-  loadCheckedCodes();
+  loadUncheckedCodes();
   await DataStore.init();
   await loadScoreSettings();
   initIssueSelector();
