@@ -54,8 +54,31 @@ const AppState = {
   filterIndustries: [],
   filterSettlement: '',
   filterStatus: '',
-  selectedId: null
+  selectedId: null,
+  checkedCodes: new Set()
 };
+
+function loadCheckedCodes() {
+  try {
+    const saved = localStorage.getItem('shikiho_checked_codes');
+    if (saved) {
+      AppState.checkedCodes = new Set(JSON.parse(saved));
+    } else {
+      AppState.checkedCodes = new Set();
+    }
+  } catch (e) {
+    console.error('Failed to load checked codes:', e);
+    AppState.checkedCodes = new Set();
+  }
+}
+
+function saveCheckedCodes() {
+  try {
+    localStorage.setItem('shikiho_checked_codes', JSON.stringify(Array.from(AppState.checkedCodes)));
+  } catch (e) {
+    console.error('Failed to save checked codes:', e);
+  }
+}
 
 // ============================================================
 // Supabase Mapping Utilities
@@ -734,6 +757,8 @@ async function renderTable() {
       (d.code && String(d.code).includes(q)) ||
       (d.name && d.name.toLowerCase().includes(q))
     );
+    // 検索表示の場合、チェックボックスが外れている行は非表示
+    data = data.filter(d => AppState.checkedCodes.has(d.code));
   }
 
   // 業種フィルター（複数選択）
@@ -776,6 +801,7 @@ async function renderTable() {
 
   tbody.innerHTML = data.map(item => {
     const overall = computeOverallGrade(item);
+    const isChecked = AppState.checkedCodes.has(item.code) ? 'checked' : '';
     
     // 決算月の色分け（12月・6月は青、3月以外は赤）
     let settlementStyle = '';
@@ -790,6 +816,7 @@ async function renderTable() {
 
     return `
       <tr data-id="${item.id}">
+        <td class="col-checkbox"><input type="checkbox" class="row-checkbox" data-code="${item.code}" ${isChecked}></td>
         <td class="col-code">${item.code || '-'}</td>
         <td class="col-name" title="${item.name || ''}">${item.name || '-'}</td>
         <td class="col-settlement" ${settlementStyle}>${item.settlement || '-'}</td>
@@ -808,11 +835,32 @@ async function renderTable() {
     `;
   }).join('');
 
+  // Row checkbox click & change handlers
+  tbody.querySelectorAll('.row-checkbox').forEach(cb => {
+    cb.addEventListener('click', (e) => {
+      e.stopPropagation(); // 詳細画面が開かないようにする
+    });
+    cb.addEventListener('change', () => {
+      const code = cb.dataset.code;
+      if (cb.checked) {
+        AppState.checkedCodes.add(code);
+      } else {
+        AppState.checkedCodes.delete(code);
+      }
+      saveCheckedCodes();
+      
+      // 検索表示の場合は、チェックを外した瞬間に非表示になるよう再描画
+      if (AppState.searchQuery) {
+        renderTable();
+      }
+    });
+  });
+
   // Row click handlers
   tbody.querySelectorAll('tr').forEach(tr => {
     tr.addEventListener('click', (e) => {
       // ステータスセレクトボックスのクリック時は詳細を開かないようにガード
-      if (e.target.classList.contains('status-select')) {
+      if (e.target.classList.contains('status-select') || e.target.classList.contains('row-checkbox')) {
         return;
       }
       const id = tr.dataset.id;
@@ -2421,6 +2469,7 @@ function initEvents() {
 // Initialization
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
+  loadCheckedCodes();
   await DataStore.init();
   await loadScoreSettings();
   initIssueSelector();

@@ -1871,3 +1871,20 @@ textarea.form-input {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ========================================
+   Selection Checkbox Column
+   ======================================== */
+.col-checkbox {
+  text-align: center;
+  vertical-align: middle;
+  width: 40px;
+}
+
+.row-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+  vertical-align: middle;
+}
